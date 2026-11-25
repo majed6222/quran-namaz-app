@@ -568,8 +568,8 @@ function refInfo(txt){const t=String(txt||'');
   else if(!hadith){grade='ফিকহি/আসার ভিত্তিক — হাদিসের মান প্রযোজ্য নয় বা '+NEEDS}
   return{quran,hadith,grade,known}}
 function reviewLine(key,label){const r=Rev.get(key);
-  return `<div class="rv noprint-soft"><span class="src">${r?`✔ পর্যালোচিত: <b>${esc(r.by)}</b>${r.date?' · '+esc(r.date):''}${r.note?' · '+esc(r.note):''}`:'পর্যালোচক: — (এখনো কেউ পর্যালোচনা করেননি; মালিক পূরণ করবেন)'}</span>
-  <button class="btn alt sm noprint" type="button" data-act="review" data-key="${esc(key)}" data-title="${esc(label||key)}">✎ পর্যালোচক</button></div>`}
+  return `<div class="rv"><span class="src">${r?`✔ রিভিউ করেছেন: <b>${esc(r.by)}</b>${r.date?' · '+esc(r.date):''}${r.note?' · '+esc(r.note):''}`:'রিভিউ করেছেন: — (এখনো কেউ নন; স্কলার রিভিউয়ের পর মালিক পূরণ করবেন)'}</span>
+  <button class="btn alt sm noprint" type="button" data-act="review" data-key="${esc(key)}" data-title="${esc(label||key)}">✎ রিভিউ করেছেন</button></div>`}
 const reportBtn=(kind,id,title)=>`<button class="btn alt sm noprint" type="button" data-act="report" data-kind="${esc(kind)}" data-id="${esc(id)}" data-title="${esc(title||'')}">⚑ ভুল পেলে জানান</button>`;
 function refBox(key,txt,label){const i=refInfo(txt);
   return `<div class="refbox"><div class="rb-h">📌 সূত্র ও যাচাই</div><dl>
@@ -952,7 +952,7 @@ function copyText(s){if(navigator.clipboard&&navigator.clipboard.writeText){retu
 const NAV=[['home','হোম','🏠'],['-','কুরআন'],['quran','সম্পূর্ণ আল-কুরআন','📖'],['surahs','১১৪টি সূরা','🗂'],['translit','বাংলা উচ্চারণ','🔤'],['qari','কুরআন তিলাওয়াত ও ক্বারি','🎧'],['tafsir','তাফসির ও শানে নুযুল','📚'],['tajweed','তাজবিদ রেফারেন্স','🎨'],['hifz','হিফজ ও রিভিশন','🧠'],
  ['-','নামাজ ও দোয়া'],['namaz','নামাজ শিক্ষা','🕌'],['recitations','নামাজের দোয়া ও সূরা','🤲'],['dua','দোয়া ও যিকির','📿'],['checklist','নামাজ অনুশীলন চেকলিস্ট','✅'],['quiz','কুইজ ও ফ্ল্যাশকার্ড','❓'],['madhhab','মতভেদ সারণি','⚖️'],
  ['-','দৈনন্দিন'],['prayer','নামাজের সময়, কিবলা ও হিজরি','🧭'],['goals','লক্ষ্য, রুটিন ও স্ট্রিক','📅'],['progress','বুকমার্ক ও পড়ার অগ্রগতি','🔖'],
- ['-','ব্যবস্থাপনা'],['downloads','অফলাইন ডাউনলোড','⬇️'],['reports','ভুলের রিপোর্ট','⚑'],['settings','সেটিংস ও ব্যাকআপ','⚙️'],['privacy','গোপনীয়তা','🔒'],['about','সূত্র ও সীমাবদ্ধতা','ℹ️']];
+ ['-','ব্যবস্থাপনা'],['downloads','অফলাইন ডাউনলোড','⬇️'],['verify','আরবি যাচাই ও ইনভেন্টরি','🔍'],['reports','ভুলের রিপোর্ট','⚑'],['settings','সেটিংস ও ব্যাকআপ','⚙️'],['privacy','গোপনীয়তা','🔒'],['about','সূত্র ও সীমাবদ্ধতা','ℹ️']];
 const NAVMAP={surah:'surahs',lesson:'namaz',tutorial:'namaz',search:''};
 function buildNav(cur){$('#nav').innerHTML=NAV.map(n=>n[0]==='-'?`<div class="nvh" role="presentation">${n[1]}</div>`:`<a href="#/${n[0]}" class="${cur===n[0]?'on':''}" ${cur===n[0]?'aria-current="page"':''}><span aria-hidden="true">${n[2]}</span>${n[1]}</a>`).join('')}
 function openMenu(o){$('#nav').classList.toggle('open',o);$('#scrim').classList.toggle('on',o);$('#menuBtn').setAttribute('aria-expanded',o)}
@@ -978,7 +978,7 @@ $('#histBox').onclick=e=>{if(e.target.closest('a')){$('#histBox').hidden=true;$(
 
 let RT=0;
 function routes(p){return{home:vHome,quran:vQuran,surahs:vSurahs,surah:()=>vSurah(+p[1],+p[2]||0),translit:vTranslit,qari:vQari,tafsir:()=>vTafsir(+p[1]||0),namaz:vNamaz,lesson:()=>vLesson(+p[1]),tutorial:()=>vTutorial(p[1]||'two'),recitations:vRecitations,dua:vDua,progress:vProgress,settings:vSettings,about:vAbout,search:()=>vSearch(p.slice(1).join('/')),
-  tajweed:vTajweed,hifz:()=>vHifz(p),checklist:()=>vChecklist(p[1]||'fajr'),quiz:()=>vQuiz(p[1]||''),madhhab:vMadhhab,prayer:vPrayer,goals:vGoals,downloads:()=>vDownloads(+p[1]||0),reports:vReports,privacy:vPrivacy}}
+  tajweed:vTajweed,hifz:()=>vHifz(p),checklist:()=>vChecklist(p[1]||'fajr'),quiz:()=>vQuiz(p[1]||''),madhhab:vMadhhab,prayer:vPrayer,goals:vGoals,downloads:()=>vDownloads(+p[1]||0),reports:vReports,privacy:vPrivacy,verify:()=>vVerify(p)}}
 function route(){RT++;if(window.__cleanup){try{window.__cleanup()}catch(e){}window.__cleanup=null}let h;try{h=decodeURIComponent(location.hash.replace(/^#\/?/,''))}catch(e){h=location.hash.replace(/^#\/?/,'')}
   const parts=h.split('/');const r=parts[0]||'home';openMenu(false);buildNav(r in NAVMAP?NAVMAP[r]:r);
   const fail=e=>view(`<div class="errbox">এই পাতা দেখাতে সমস্যা হয়েছে: ${esc(e&&e.message)} <a href="#/home">হোমে যান</a></div>`);
@@ -1061,7 +1061,7 @@ function renderAyahs(n,en,focus){
   if(!data.ar){$('#sbody').innerHTML=h+'<div class="card">আরবি টেক্সট লোড না হওয়ায় আয়াত দেখানো যাচ্ছে না। কুরআনের টেক্সট কখনো বানিয়ে দেখানো হয় না।</div>';return}
   h+=`<div class="notice"><b>আরবি সোর্স:</b> ${esc(data.src)}। <b>অনুবাদ:</b> ${data.trMeta?esc(data.trMeta.name+(data.trMeta.author?' — '+data.trMeta.author:'')):'<b>লোড হয়নি</b>'}।<br>
   বাংলা উচ্চারণ: এই সূরার জন্য যাচাইকৃত ও লাইসেন্সপ্রাপ্ত বাংলা ট্রান্সলিটারেশন ডেটা সংযুক্ত নেই—তাই দেখানো হচ্ছে না। উচ্চারণ ও তাজবিদ যোগ্য ক্বারির কাছে শিখুন।
-  <details style="margin-top:6px"><summary>আরবি টেক্সট যাচাই তথ্য</summary><div class="src">✔ আয়াত সংখ্যা মিলেছে (${B(data.ar.length)}/${B(s.a)}) · প্রতিটি আয়াতে আরবি হরফ আছে, ল্যাটিন/HTML অক্ষর নেই · টেক্সট চেকসাম: <code>${esc(data.csum||'—')}</code> (অন্য ডিভাইস/সোর্সের সাথে মেলাতে পারেন)${data.warn?`<br>⚠️ ${esc(data.warn)}`:''}</div></details>
+  <details style="margin-top:6px"><summary>আরবি টেক্সট যাচাই তথ্য (সেলফ-চেক)</summary><div class="src">${(()=>{const lc=localSelfCheck({ar:data.ar,csum:data.csum},n);return (lc.count?'✔ আয়াত সংখ্যা মিলেছে ('+B(data.ar.length)+'/'+B(s.a)+')':'✖ আয়াত সংখ্যা অমিল')+' · '+(lc.iss.length?'⚠️ '+B(lc.iss.length)+'টি সন্দেহজনক ক্যারেক্টার-সমস্যা: '+esc(lc.iss.slice(0,3).map(x=>'আয়াত '+B(x[0])+' — '+x[1]).join('; ')):'✔ অবৈধ/ড্রপ-সন্দেহজনক ক্যারেক্টার নেই')+' · '+(lc.csumOk?'✔ চেকসাম মিলেছে':'✖ চেকসাম অমিল — ক্যাশ বিকৃত হতে পারে')})()} · চেকসাম: <code>${esc(data.csum||'—')}</code>${data.warn?`<br>⚠️ ${esc(data.warn)}`:''}<br><a href="#/verify/${n}">🔍 দ্বিতীয় সোর্সের সাথে পূর্ণ সেলফ-চেক চালান</a></div></details>
   <div class="row noprint" style="margin-top:6px">${reviewLine('surah:'+n,'সূরা '+s.bn)}${reportBtn('surah',String(n),'সূরা '+s.bn)}</div></div>`;
   if(P.tj){if(c.tj){h+=tjLegend(c.tj.h);if(c.tj.bad.length)h+=`<div class="notice">⚠️ ${B(c.tj.bad.length)}টি আয়াতে তাজবিদ-সোর্সের টেক্সট মূল টেক্সটের সাথে হুবহু না মেলায় সেগুলো রঙ ছাড়া দেখানো হচ্ছে (আয়াত: ${c.tj.bad.slice(0,12).map(i=>B(i+1)).join(', ')}${c.tj.bad.length>12?'…':''})।</div>`}
     else h+=`<div class="errbox">তাজবিদ রঙ লোড হয়নি${c.tjErr?': '+esc(c.tjErr):''}; সাধারণ টেক্সট দেখানো হচ্ছে। ${retryBtn('retrytj','data-n="'+n+'"')}</div>`}
@@ -1219,6 +1219,7 @@ function vLesson(i){
   view(`<div class="printonly">পবিত্র আল-কুরআন ও নামাজ শিক্ষা — মুদ্রিত: ${esc(dateLine())}</div><div class="row sp noprint"><a class="btn alt sm" href="#/namaz">← সব পাঠ</a><span class="chip g">পাঠ ${B(i)}/${B(LESSONS.length)}</span></div>
   <article class="card lesson"><h2 class="pg">${B(i)}. ${l.t}</h2>${diff?'<span class="chip g">⚖️ মাজহাবভেদে পার্থক্য আছে — <a href="#/madhhab">মতভেদ সারণি</a></span>':''}${h}
   <div class="noprint">${(links[i]||[]).map(x=>`<a class="btn alt sm" href="#/${x[1]}">${x[0]}</a> `).join('')}</div>
+  ${(()=>{const rs=MZ_TABLE.filter(r=>r[1]===i);return rs.length?`<details class="card" open><summary><b>⚖️ এই পাঠে মাজহাবভেদে পার্থক্য (নিরপেক্ষ সারণি)</b></summary><div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:640px"><thead><tr>${['বিষয়','হানাফি','শাফেয়ি','মালেকি','হাম্বলি'].map(x=>`<th scope="col" style="text-align:start;padding:5px;border-bottom:2px solid var(--bd)">${x}</th>`).join('')}</tr></thead><tbody>${rs.map(r=>`<tr><th scope="row" style="text-align:start;padding:5px;border-bottom:1px solid var(--bd)">${r[0]}</th>${r.slice(2).map(c=>`<td style="padding:5px;border-bottom:1px solid var(--bd);vertical-align:top">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="src">“পাঠে উল্লেখ নেই” মানে এই অ্যাপে সেই মাজহাবের মত লেখা নেই। কোনো মতই একমাত্র মত নয়। স্কলার-রিভিউ বাকি।</div></details>`:''})()}
   ${refBox('lesson:'+i,l.r,'পাঠ '+i+': '+l.t)}
   <div class="row noprint" style="margin-top:8px">${reportBtn('lesson',String(i),'পাঠ '+i+': '+l.t)}<button class="btn alt sm" data-act="print">🖨 প্রিন্ট / PDF</button></div></article>
   <div class="row sp noprint"><button class="btn ${d?'alt':''}" id="dn">${d?'✔ সম্পন্ন (বাতিল করুন)':'✔ সম্পন্ন হিসেবে চিহ্নিত করুন'}</button><span>${i>1?`<a class="btn alt" href="#/lesson/${i-1}">← আগের</a>`:''} ${i<LESSONS.length?`<a class="btn" href="#/lesson/${i+1}">পরের →</a>`:''}</span></div>
@@ -1806,6 +1807,85 @@ async function vSearch(q){
   if(!sur.length&&!les.length&&!du.length&&!rc.length&&!ay.length&&!jmp)h='<div class="card">কিছু পাওয়া যায়নি।</div>'+h;
   $('#sres').innerHTML=h}
 
+
+/* =========================================================
+   আরবি যাচাই, ক্যারেক্টার-ড্রপ সেলফ-চেক ও হার্ডকোড-ইনভেন্টরি
+   নীতি: কিছুই স্বয়ংক্রিয়ভাবে ঠিক/বদল করা হয় না—শুধু মিল/অমিল দেখানো হয়।
+   ========================================================= */
+const VRF={get:()=>Store.get('vrf',{}),set(o){Store.set('vrf',o)}};
+const rskel=s=>nz(s).replace(/\s+/g,'');
+function arIssues(ar){const out=[];
+  ar.forEach((t,i)=>{const a=i+1;
+    if(/\uFFFD/.test(t))out.push([a,'রিপ্লেসমেন্ট ক্যারেক্টার (�) আছে — এনকোডিং/ড্রপ সমস্যা']);
+    if(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/.test(t))out.push([a,'কন্ট্রোল ক্যারেক্টার আছে']);
+    if(/^[\u064B-\u065F\u0670\u06D6-\u06ED]/.test(t.trim()))out.push([a,'আয়াত একা হরকত দিয়ে শুরু — আগের হরফ বাদ পড়ে থাকতে পারে']);
+    if(/\s{2,}/.test(t))out.push([a,'একাধিক পরপর স্পেস']);
+    if(!/[\u0621-\u064A\u0671-\u06D3]/.test(t))out.push([a,'কোনো আরবি হরফ নেই']);
+    t.split(/\s+/).forEach(w=>{if(w&&!/[\u0621-\u064A\u0671-\u06D3]/.test(w)&&!/^[\u0610-\u061A\u06D6-\u06ED\u06DE\u06E9]+$/.test(w))out.push([a,'হরফহীন শব্দ-টুকরো: '+w])})});
+  return out}
+function localSelfCheck(rec,n){const s=SR[n-1],iss=arIssues(rec.ar),cs=fnv(rec.ar.join('\n'));
+  return{count:rec.ar.length===s.a,iss,csumOk:!rec.csum||rec.csum===cs,cs}}
+async function crossCheck(n){const s=SR[n-1],out={n,steps:[]};
+  const rec=await getAr(n);out.src=rec.src;const lc=localSelfCheck(rec,n);
+  out.steps.push({t:'আয়াত সংখ্যা সূরার মেটাডেটার সাথে',ok:lc.count,d:`${B(rec.ar.length)}/${B(s.a)}`});
+  out.steps.push({t:'লোকাল সেলফ-চেক (অবৈধ/ড্রপ-সন্দেহজনক ক্যারেক্টার)',ok:!lc.iss.length,d:lc.iss.length?lc.iss.slice(0,8).map(x=>'আয়াত '+B(x[0])+': '+x[1]).join('; '):'কোনো সমস্যা নেই'});
+  out.steps.push({t:'সংরক্ষিত চেকসাম বনাম বর্তমান টেক্সট (স্টোরেজ বিকৃতি শনাক্ত)',ok:lc.csumOk,d:`${rec.csum||'—'} / ${lc.cs}`});
+  let other=null,err=null;
+  try{if(rec.alt){const j=await jget(`${QAPI}/quran/verses/uthmani?chapter_number=${n}`);other={ar:(j.verses||[]).map(v=>v.text_uthmani),src:'Quran.com API v4'}}else{const a=await altAr(n);other={ar:a.ar,src:'alquran.cloud (quran-uthmani)'}}}catch(e){err=errMsg(e)}
+  if(other){const diffs=[];rec.ar.forEach((t,i)=>{const a=rskel(t),b=rskel(other.ar[i]||'');if(a!==b){let k=0;while(k<a.length&&a[k]===b[k])k++;diffs.push({a:i+1,x:t,y:other.ar[i]||'',k,drop:a.length<b.length})}});
+    out.steps.push({t:`দ্বিতীয় সোর্স (${other.src}) এর সাথে হরকত-নিরপেক্ষ হরফ-মিল`,ok:!diffs.length,d:diffs.length?`${B(diffs.length)}টি আয়াতে পার্থক্য (লিপি-রীতির ভিন্নতাও হতে পারে — যাচাই প্রয়োজন)`:`সব ${B(rec.ar.length)} আয়াতের হরফ হুবহু মিলেছে`,diffs})}
+  else out.steps.push({t:'দ্বিতীয় সোর্সের সাথে মিল',ok:null,d:'যাচাই করা যায়নি: '+err});
+  return out}
+function drawCheck(r){return `<div class="card"><b>সূরা ${esc(SR[r.n-1].bn)} — সেলফ-চেক ফলাফল</b> <span class="src">(প্রদর্শিত সোর্স: ${esc(r.src)})</span>${r.steps.map(s=>`<div class="ptrow"><span>${s.ok===true?'✔':s.ok===false?'✖':'⚠️'} ${esc(s.t)}</span><span class="src" style="text-align:end">${esc(s.d)}</span></div>${(s.diffs||[]).slice(0,12).map(d=>`<div class="notice" style="font-size:.9em">আয়াত ${B(d.a)}${d.drop?' (এই টেক্সটে হরফ কম — সম্ভাব্য ড্রপ)':''}: <span lang="ar" dir="rtl" class="arinline">${esc(d.x)}</span><br><span lang="ar" dir="rtl" class="arinline">${esc(d.y)}</span></div>`).join('')}`).join('')}</div>`}
+function citesOf(s){const r=[],t=bd2en(s||''),re=/(\d{1,3})\s*[:：]\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?/g;let m;
+  while((m=re.exec(t))){const n=+m[1],a=+m[2],b=+(m[3]||m[2]);if(n>=1&&n<=114&&a>=1&&b<=SR[n-1].a&&a<=b)r.push([n,a,b])}return r}
+function invRows(){const rows=[];
+  REC.forEach(r=>{if(r.q)rows.push({id:'rec:'+r.id,kind:'নামাজের পাঠ — API থেকে লোড (হার্ডকোড নয়)',title:r.t,ar:null,cite:`সূরা ${r.q[0]}:${r.q[1]}–${r.q[2]}`,auto:'api'});
+    else rows.push({id:'rec:'+r.id,kind:'নামাজের পাঠ — হাতে এম্বেড করা আরবি',title:r.t,ar:r.ar,cite:r.ref,auto:'check'})});
+  DUAS.forEach((d,i)=>rows.push({id:'dua:'+i,kind:'দোয়া — হাতে এম্বেড করা আরবি',title:d.t,ar:d.ar,cite:d.src,auto:'check'}));
+  LESSONS.forEach((l,i)=>{const runs=(l.b.join('\n').match(AR_RUN))||[];runs.forEach((r,j)=>rows.push({id:`lesson:${i+1}`,sub:'#'+(j+1),kind:'পাঠের ভেতরে এম্বেড করা আরবি',title:`পাঠ ${i+1}: ${l.t}`,ar:r,cite:l.r,auto:'check'}));
+    rows.push({id:`lesson:${i+1}`,sub:'(মাসআলা/সূত্র)',kind:'পাঠের বাংলা মাসআলা ও হাদিস-সূত্র',title:`পাঠ ${i+1}: ${l.t}`,ar:null,cite:l.r,auto:'text'})});
+  SN.forEach((x,i)=>rows.push({id:'sn:'+i,kind:'শানে নুযুল বর্ণনা',title:`সূরা ${SR[x.n-1].bn} ${x.a}: ${x.t.slice(0,50)}…`,ar:null,cite:x.s+' · মান: '+x.g,auto:'text'}));
+  rows.push({id:'sr:names',kind:'সূরার আরবি নাম (SR[].ar — ১১৪টি)',title:'১১৪টি সূরার আরবি নাম',ar:SR.map(s=>s.ar).join(' | '),cite:'সূত্র উল্লেখ নেই',auto:'names'});
+  return rows}
+const ST={api:['ok','✔ API থেকে সরাসরি লোড — হার্ডকোড নয়'],exact:['ok','✔ উদ্ধৃত আয়াতের টেক্সটে হুবহু (হরকত-নিরপেক্ষ) মিলেছে'],partial:['no','◐ আংশিক মিল — স্কলার রিভিউ প্রয়োজন'],none:['bad','✖ উদ্ধৃত আয়াতের সাথে মেলেনি — স্কলার রিভিউ প্রয়োজন'],manual:['no','স্বয়ংক্রিয় সোর্সে যাচাই অসম্ভব (হাদিস/দোয়া) — স্কলার রিভিউ প্রয়োজন'],text:['no','বাংলা কনটেন্ট — সূত্র/নম্বর/মান স্কলার যাচাই প্রয়োজন'],offline:['no','যাচাই করা যায়নি (ইন্টারনেট/সোর্স সমস্যা)']};
+function matchItem(ar,verse){const a=nz(ar),v=nz(verse);if(!a)return{st:'manual',pct:0};if(v.includes(a))return{st:'exact',pct:100};
+  const vw=new Set(v.split(' ')),aw=a.split(' '),hit=aw.filter(w=>vw.has(w)).length,pct=Math.round(hit/aw.length*100);return{st:pct>=70?'partial':'none',pct}}
+async function runInventory(rows,prog){const out={};let i=0;
+  for(const r of rows){i++;if(prog)prog(i,rows.length);const k=r.id+(r.sub||'');
+    if(r.auto==='api'){out[k]={st:'api'};continue}
+    if(r.auto==='text'){out[k]={st:'text'};continue}
+    if(r.auto==='names'){try{const j=await jget(`${QAPI}/chapters?language=ar`);const ch=j.chapters||[];const bad=[];SR.forEach(s=>{const c=ch.find(x=>x.id===s.n);if(!c||nz(c.name_arabic)!==nz(s.ar))bad.push(s.n)});out[k]=bad.length?{st:'partial',note:'অমিল সূরা: '+bad.map(B).join(', ')}:{st:'exact',note:'১১৪টি নামই Quran.com/chapters-এর সাথে (হরকত-নিরপেক্ষ) মিলেছে'}}catch(e){out[k]={st:'offline',note:errMsg(e)}}continue}
+    const cs=citesOf(r.cite);if(!cs.length){out[k]={st:'manual'};continue}
+    let best={st:'none',pct:0},failed=false;
+    for(const [n,a,b] of cs){try{const rec=await getAr(n);const m=matchItem(r.ar,rec.ar.slice(a-1,b).join(' '));if(m.pct>best.pct||m.st==='exact')best=Object.assign(m,{cite:`${n}:${a}${b>a?'–'+b:''}`});if(m.st==='exact')break}catch(e){failed=true}}
+    out[k]=best.pct===0&&failed?{st:'offline'}:best}
+  return out}
+function invTable(rows,res,flt){const rv=Rev.all();const sv=r=>(res[r.id+(r.sub||'')]||{}).st||'pending';
+  return `<div class="card" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><caption class="sr">হার্ডকোড করা আরবি ও সূত্রের ইনভেন্টরি</caption><thead><tr>${['কী','ধরন / শিরোনাম','আরবি (হরফ · হ্যাশ)','সূত্র','যাচাই অবস্থা','রিভিউ করেছেন'].map(h=>`<th scope="col" style="text-align:start;padding:6px;border-bottom:2px solid var(--bd)">${h}</th>`).join('')}</tr></thead><tbody>
+  ${rows.filter(r=>{const s=sv(r);return !flt||flt==='all'||(flt==='review'?!['api','exact'].includes(s):s===flt)}).map(r=>{const k=r.id+(r.sub||''),v=res[k],st=v?ST[v.st]:null,rvv=rv[r.id];const arn=r.ar?(r.ar.match(/[\u0621-\u064A\u0671-\u06D3]/g)||[]).length:0;const td='style="padding:6px;border-bottom:1px solid var(--bd);vertical-align:top"';
+    return `<tr><td ${td}><code>${esc(k)}</code></td><td ${td}><span class="src">${esc(r.kind)}</span><br>${esc(r.title)}</td><td ${td}>${r.ar?`${B(arn)} হরফ · <code>${fnv(r.ar)}</code>`:'—'}</td><td ${td}>${esc(r.cite)}${r.auto!=='api'&&refInfo(r.cite).hadith?`<br><b style="color:var(--err-tx)">নম্বর/অধ্যায়: ${NEEDS}</b>`:''}</td><td ${td}>${st?`<span class="vbadge ${st[0]}">${st[1]}</span>${v.pct!=null&&['partial','none'].includes(v.st)?` (${B(v.pct)}%${v.cite?', '+B(v.cite):''})`:''}${v.note?'<br><small>'+esc(v.note)+'</small>':''}`:'<span class="src">“স্বয়ংক্রিয় মিল চালান” চাপুন</span>'}</td><td ${td}>${rvv?esc(rvv.by)+(rvv.date?' · '+esc(rvv.date):''):'—'}</td></tr>`}).join('')}</tbody></table></div>`}
+async function vVerify(p){
+  const tk=RT,focusN=+p[1]||0;const rows=invRows();let res=VRF.get(),flt='review';
+  const cached=(await DB.range('kv','ar:','ar:\uffff').catch(()=>[])).map(x=>+x.k.slice(3)).sort((a,b)=>a-b);if(tk!==RT)return;
+  const draw=()=>{$('#invBox').innerHTML=invTable(rows,res,flt);$('#invSum').textContent=`মোট ${B(rows.length)}টি এন্ট্রি · হাতে এম্বেড করা আরবি ${B(rows.filter(r=>r.ar).length)}টি · রিভিউ প্রয়োজন ${B(rows.filter(r=>!['api','exact'].includes((res[r.id+(r.sub||'')]||{}).st)).length)}টি`};
+  view(`<div class="printonly">আরবি যাচাই ও ইনভেন্টরি — ${esc(dateLine())}</div><h2 class="pg">আরবি যাচাই ও ইনভেন্টরি</h2>
+  <div class="notice"><b>নীতি:</b> কুরআনের আরবি কখনো হাতে টাইপ করা হয় না—সূরা-পাতায় সবসময় API/ক্যাশ থেকে আসে এবং উৎস দেখানো হয়। এই পাতা কিছু <u>বদলায় না</u>; শুধু মিল/অমিল দেখায়। ফাইলে যেসব আরবি/হাদিস/দোয়া হার্ডকোড করা আছে সেগুলোর পূর্ণ তালিকা নিচে—স্কলার রিভিউয়ের জন্য এক্সপোর্ট করা যায়।</div>
+  <div class="card noprint"><h3 style="margin-top:0">১. সূরার আরবি টেক্সট সেলফ-চেক</h3><div class="row"><label class="fld"><span>সূরা</span><select id="vN">${SR.map(s=>`<option value="${s.n}" ${s.n===focusN?'selected':''}>${B(s.n)}. ${s.bn}${cached.includes(s.n)?' ✔ক্যাশ':''}</option>`).join('')}</select></label><button class="btn" id="vGo" style="align-self:flex-end">🔍 সেলফ-চেক চালান</button><button class="btn alt" id="vAll" style="align-self:flex-end">ক্যাশ করা সব সূরা (লোকাল, অফলাইন)</button></div>
+   <div class="src">ধাপ: আয়াত-সংখ্যা · অবৈধ/ড্রপ-সন্দেহজনক ক্যারেক্টার · চেকসাম · দ্বিতীয় সোর্সের সাথে হরফ-মিল (ইন্টারনেট লাগে)। দুই সোর্সের লিপি-রীতি সামান্য আলাদা হলে “পার্থক্য” দেখাতে পারে—সেটা ভুল নয়, যাচাইয়ের সংকেত।</div><div id="vOut" role="status" aria-live="polite"></div></div>
+  <div class="card"><h3 style="margin-top:0">২. হার্ডকোড করা আরবি/হাদিস/দোয়া/মাসআলা ইনভেন্টরি</h3><div id="invSum" class="src"></div>
+   <div class="row noprint" style="margin-top:6px"><button class="btn" id="invRun">▶ স্বয়ংক্রিয় মিল চালান (ইন্টারনেট)</button><label class="fld" style="min-width:200px"><span>ফিল্টার</span><select id="invF"><option value="review">রিভিউ প্রয়োজন</option><option value="all">সব</option><option value="exact">✔ মিলেছে</option><option value="partial">◐ আংশিক</option><option value="none">✖ মেলেনি</option><option value="manual">হাদিস/দোয়া (ম্যানুয়াল)</option></select></label><button class="btn alt" id="invExp" style="align-self:flex-end">⬇️ JSON এক্সপোর্ট</button><button class="btn alt" data-act="print" style="align-self:flex-end">🖨 প্রিন্ট</button></div><div id="invProg" class="src" role="status"></div></div>
+  <div id="invBox"></div>`);
+  draw();
+  $('#invF').onchange=e=>{flt=e.target.value;draw()};
+  $('#vGo').onclick=async()=>{const n=+$('#vN').value,o=$('#vOut');o.innerHTML=skel(1);try{const r=await crossCheck(n);o.innerHTML=drawCheck(r)}catch(e){o.innerHTML=`<div class="errbox">সেলফ-চেক ব্যর্থ: ${esc(e.list?e.list.join(' | '):e.message||errMsg(e))}</div>`}};
+  $('#vAll').onclick=async()=>{const o=$('#vOut');if(!cached.length){o.innerHTML='<div class="notice">ক্যাশে কোনো সূরা নেই। আগে সূরা খুলুন বা ডাউনলোড করুন।</div>';return}
+    let h='',bad=0;for(const n of cached){const rec=await getAr(n).catch(()=>null);if(!rec)continue;const c=localSelfCheck(rec,n);const ok=c.count&&!c.iss.length&&c.csumOk;if(!ok)bad++;h+=`<div class="ptrow"><span>${ok?'✔':'✖'} সূরা ${esc(SR[n-1].bn)}</span><span class="src">${ok?'সমস্যা নেই':esc((c.count?'':'সংখ্যা অমিল; ')+(c.csumOk?'':'চেকসাম অমিল; ')+c.iss.slice(0,3).map(x=>'আয়াত '+B(x[0])+': '+x[1]).join('; '))}</span></div>`}
+    o.innerHTML=`<div class="card"><b>${B(cached.length)}টি ক্যাশ-করা সূরা চেক — ${bad?`⚠️ ${B(bad)}টিতে সমস্যা`:'✔ সব ঠিক'}</b>${h}</div>`};
+  $('#invRun').onclick=async()=>{$('#invRun').disabled=true;try{res=await runInventory(rows,(i,t)=>{$('#invProg').textContent=`যাচাই চলছে ${B(i)}/${B(t)}…`});VRF.set(res);$('#invProg').textContent='সম্পন্ন — '+new Date().toLocaleTimeString('bn-BD')}catch(e){$('#invProg').textContent='ব্যর্থ: '+errMsg(e)}$('#invRun').disabled=false;draw()};
+  $('#invExp').onclick=()=>downloadJSON('hqn-integrity-'+todayKey()+'.json',{app:'hqn-integrity',generatedAt:new Date().toISOString(),note:'এই ফাইল শুধু স্কলার রিভিউয়ের জন্য; কিছু স্বয়ংক্রিয়ভাবে ঠিক করা হয়নি।',inventory:rows.map(r=>({key:r.id+(r.sub||''),kind:r.kind,title:r.title,cite:r.cite,arabicLetters:r.ar?(r.ar.match(/[\u0621-\u064A\u0671-\u06D3]/g)||[]).length:0,arabicHash:r.ar?fnv(r.ar):null,status:(res[r.id+(r.sub||'')]||{}).st||'unchecked',matchPct:(res[r.id+(r.sub||'')]||{}).pct,reviewedBy:(Rev.get(r.id)||{}).by||null})),reviews:Rev.all(),reports:Rep.list()});
+  if(focusN)$('#vGo').click();
+}
 
 /* =========================================================
    গ্লোবাল ইভেন্ট হ্যান্ডলার, কীবোর্ড শর্টকাট, শুরু

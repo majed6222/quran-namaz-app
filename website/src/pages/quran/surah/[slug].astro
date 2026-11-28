@@ -29,6 +29,7 @@ const structuredData = {
     <button id="load-reader" type="button">আয়াত লোড করুন</button>
     <button id="font-down" type="button" aria-label="আরবি লেখা ছোট করুন">A−</button>
     <button id="font-up" type="button" aria-label="আরবি লেখা বড় করুন">A+</button>
+    <button id="toggle-tajweed" type="button" aria-pressed="false">তাজবিদের রং দেখান</button>
   </section>
   <section class="audio-player panel" aria-label="তিলাওয়াত অডিও প্লেয়ার">
     <h2>আয়াতভিত্তিক তিলাওয়াত</h2>
@@ -55,6 +56,15 @@ const structuredData = {
     <p class="audio-note">অডিও সূত্র: EveryAyah.com। অডিও ফাইল ইন্টারনেট থেকে স্ট্রিম হবে; এই ধাপে ডাউনলোড বা অফলাইন অডিও যুক্ত হয়নি।</p>
   </section>
   <p id="reader-status" class="status" role="status" aria-live="polite">আরবি আয়াত ও বাংলা অনুবাদ লোড হচ্ছে…</p>
+  <p id="tajweed-status" class="status" role="status" aria-live="polite" hidden></p>
+  <section id="tajweed-legend" class="tajweed-legend panel" hidden>
+    <strong>তাজবিদ রঙের নির্দেশিকা</strong>
+    <span class="tj tj-gh">গুন্নাহ</span><span class="tj tj-q">কলকলা</span>
+    <span class="tj tj-ik">ইখফা</span><span class="tj tj-iq">ইকলাব</span>
+    <span class="tj tj-ig">ইদগাম বিগুন্নাহ</span><span class="tj tj-iw">ইদগাম বিলা গুন্নাহ</span>
+    <span class="tj tj-mn">মাদ্দ</span><span class="tj tj-ham">হামযাতুল ওয়াসল/নীরব হরফ</span>
+    <p class="muted">রঙগুলো শেখার সহায়ক মাত্র; সঠিক মাখরাজ ও তাজবিদের জন্য যোগ্য শিক্ষকের কাছে শিখুন।</p>
+  </section>
   <section id="ayah-list" aria-label="কুরআনের আয়াত"></section>
   <nav class="surah-pager" aria-label="সূরা নেভিগেশন">
     {surah.number > 1 && <a href={`/quran/surah/${surahs[surah.number - 2].slug}/`}>← আগের সূরা</a>}
@@ -71,6 +81,11 @@ const structuredData = {
   const selector = document.querySelector('#translation');
   const storageKey = 'quran-reader-bookmarks-v1';
   const qariKey = 'quran-reader-qari-v1';
+  const tajweedStatus = document.querySelector('#tajweed-status');
+  const tajweedLegend = document.querySelector('#tajweed-legend');
+  const tajweedButton = document.querySelector('#toggle-tajweed');
+  let tajweedEnabled = false;
+  let tajweedVerses = null;
   const qaris = [
     ['Alafasy_128kbps','মিশারি রাশিদ আল-আফাসি'],
     ['Abdul_Basit_Murattal_192kbps','আবদুল বাসিত আবদুস সামাদ (মুরাত্তাল)'],
@@ -101,6 +116,57 @@ const structuredData = {
     catch { return []; }
   };
   const setStatus = (message) => { status.textContent = message; };
+  const tajweedClass = {
+    ham_wasl:'ham', hamzat_wasl:'ham', slnt:'ham', silent:'ham',
+    laam_shamsiyah:'ham', lam_shamsiyyah:'ham',
+    madda_normal:'mn', madda_permissible:'mp', madda_necessary:'mnec', madda_obligatory:'mo',
+    qalaqah:'q', qlq:'q', qalqalah:'q', ikhfa:'ik', ikhf:'ik',
+    ikhfa_shafawi:'iks', ikhf_shfw:'iks', iqlab:'iq', iqlb:'iq',
+    idgham_ghunnah:'ig', idgh_ghn:'ig', idgham_wo_ghunnah:'iw', idgh_w_ghn:'iw',
+    idgham_shafawi:'is', idghm_shfw:'is', idgham_mutajanisayn:'im', idgh_mus:'im',
+    idgham_mutaqaribayn:'im', ghunnah:'gh', ghn:'gh'
+  };
+  const normalizeArabic = (value) => String(value || '').normalize('NFKC').replace(/[\\s۞۩۝ـ]/g, '');
+  function tajweedFragment(markup, expectedText) {
+    const parsed = new DOMParser().parseFromString('<div>' + markup + '</div>', 'text/html');
+    const root = parsed.body.firstElementChild;
+    if (!root || normalizeArabic(root.textContent) !== normalizeArabic(expectedText)) return null;
+    const fragment = document.createDocumentFragment();
+    const copy = (source, target) => {
+      for (const node of source.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) target.append(document.createTextNode(node.textContent || ''));
+        else if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.tagName === 'SUP' || (node.getAttribute('class') || '').trim() === 'end') continue;
+          const span = document.createElement('span');
+          const rawClass = (node.getAttribute('class') || '').trim().replace(/[^a-z_]/g, '');
+          const mapped = tajweedClass[rawClass];
+          if (mapped) span.className = 'tj tj-' + mapped;
+          copy(node, span);
+          target.append(span);
+        }
+      }
+    };
+    copy(root, fragment);
+    return fragment;
+  }
+  async function loadTajweed() {
+    const response = await safeGet(api + '/quran/verses/uthmani_tajweed?chapter_number=' + surahNumber);
+    const verses = response.verses || [];
+    if (verses.length !== ayahCount || verses.some(verse => typeof verse.text_uthmani_tajweed !== 'string')) {
+      throw new Error('তাজবিদ ডেটার আয়াত সংখ্যা বা গঠন মেটাডেটার সঙ্গে মেলেনি।');
+    }
+    tajweedVerses = verses.map(verse => verse.text_uthmani_tajweed);
+  }
+  function applyTajweed() {
+    document.querySelectorAll('.ayah').forEach((article, index) => {
+      const arabic = article.querySelector('.ayah-arabic');
+      if (!arabic) return;
+      if (!tajweedEnabled || !tajweedVerses) { arabic.textContent = arabic.dataset.plain || arabic.textContent; return; }
+      const fragment = tajweedFragment(tajweedVerses[index] || '', arabic.dataset.plain || '');
+      if (fragment) arabic.replaceChildren(fragment);
+      else arabic.textContent = arabic.dataset.plain || '';
+    });
+  }
   const addAyah = (number, arabic, translation) => {
     const article = document.createElement('article');
     article.className = 'ayah panel';
@@ -111,6 +177,7 @@ const structuredData = {
     const ar = document.createElement('p');
     ar.className = 'ayah-arabic';
     ar.lang = 'ar'; ar.dir = 'rtl'; ar.textContent = arabic;
+    ar.dataset.plain = arabic;
     ar.style.fontSize = fontSize + 'px';
     const tr = document.createElement('p');
     tr.className = 'ayah-translation'; tr.textContent = translation || 'এই আয়াতের অনুবাদ পাওয়া যায়নি।';
@@ -211,6 +278,12 @@ const structuredData = {
         : (chosenTranslation.data?.ayahs || []).map(item => item.text || '');
       if (arabicVerses.length !== ayahCount) throw new Error('আরবি আয়াত সংখ্যা মেটাডেটার সঙ্গে মেলেনি; নিরাপত্তার জন্য পাঠ দেখানো হয়নি।');
       if (translated.length !== ayahCount) throw new Error('বাংলা অনুবাদের আয়াত সংখ্যা মেলেনি; নিরাপত্তার জন্য পাঠ দেখানো হয়নি।');
+      tajweedVerses = null;
+      tajweedEnabled = false;
+      tajweedButton.setAttribute('aria-pressed', 'false');
+      tajweedButton.textContent = 'তাজবিদের রং দেখান';
+      tajweedLegend.hidden = true;
+      tajweedStatus.hidden = true;
       arabicVerses.forEach((verse, index) => addAyah(index + 1, verse.text_uthmani, translated[index]));
       setStatus('মোট ' + bn(ayahCount) + 'টি আয়াত লোড হয়েছে। অনুবাদ: ' + (bengali.find(x => String(x.id) === String(selector.value))?.name || 'বাংলা বিকল্প উৎস'));
     } catch (error) {
@@ -219,6 +292,31 @@ const structuredData = {
   }
   document.querySelector('#load-reader').addEventListener('click', load);
   selector.addEventListener('change', load);
+  tajweedButton.addEventListener('click', async () => {
+    if (tajweedEnabled) {
+      tajweedEnabled = false;
+      applyTajweed();
+      tajweedLegend.hidden = true;
+      tajweedStatus.hidden = true;
+      tajweedButton.setAttribute('aria-pressed', 'false');
+      tajweedButton.textContent = 'তাজবিদের রং দেখান';
+      return;
+    }
+    tajweedStatus.hidden = false;
+    tajweedStatus.textContent = 'তাজবিদের ডেটা লোড হচ্ছে…';
+    try {
+      if (!tajweedVerses) await loadTajweed();
+      tajweedEnabled = true;
+      applyTajweed();
+      tajweedLegend.hidden = false;
+      tajweedStatus.textContent = 'তাজবিদের রং দেখানো হচ্ছে। যেসব আয়াতের টেক্সট হুবহু মেলেনি, সেগুলো সাধারণ আরবি লেখায় রাখা হয়েছে।';
+      tajweedButton.setAttribute('aria-pressed', 'true');
+      tajweedButton.textContent = 'তাজবিদের রং বন্ধ করুন';
+    } catch (error) {
+      tajweedStatus.textContent = 'তাজবিদের ডেটা লোড হয়নি: ' + (error?.message || 'অজানা সমস্যা');
+      tajweedEnabled = false;
+    }
+  });
   document.querySelector('#font-up').addEventListener('click', () => {
     fontSize = Math.min(54, fontSize + 2);
     document.querySelectorAll('.ayah-arabic').forEach(node => node.style.fontSize = fontSize + 'px');
@@ -232,6 +330,14 @@ const structuredData = {
 
 <style>
   .audio-player{margin:16px 0}
+  .tajweed-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px;margin:12px 0}
+  .tajweed-legend strong{width:100%}
+  .tajweed-legend .muted{width:100%;margin:4px 0 0;font-size:.88rem}
+  .tj{font-weight:600}
+  .tj-gh{color:#8b3f9f}.tj-q{color:#b45309}.tj-ik{color:#087f5b}.tj-iq{color:#b42318}
+  .tj-ig{color:#1769aa}.tj-iw{color:#6b4fbb}.tj-mn{color:#a16207}.tj-mp{color:#0f766e}
+  .tj-mnec{color:#be123c;font-weight:800}.tj-mo{color:#0369a1}.tj-ham{color:#64748b}.tj-iks{color:#9333ea}
+  .tj-is{color:#0e7490}.tj-im{color:#4d7c0f}
   .audio-player h2{margin-top:0}
   .audio-player>select{display:block;max-width:100%;margin:6px 0 12px;padding:8px;border:1px solid #cfc7b5;border-radius:8px}
   .audio-player audio{display:block;width:100%;margin:10px 0}

@@ -96,7 +96,7 @@ const structuredData = {
     setStatus('আয়াত ও অনুবাদ আনা হচ্ছে…');
     try {
       const requestedTranslation = selector.value;
-      const translationList = await safeGet(api + '/resources/translations');
+      const translationList = await safeGet(api + '/resources/translations').catch(() => ({ translations: [] }));
       const bengali = (translationList.translations || []).filter(item =>
         String(item.language_name || '').toLowerCase().includes('bengali') ||
         String(item.language_name || '').toLowerCase().includes('bangla')

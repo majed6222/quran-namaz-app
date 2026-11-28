@@ -1,19 +1,28 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-const surahs = [{ number: 1, slug: 'al-fatiha', bn: 'আল-ফাতিহা', en: 'Al-Fatihah' }];
+import surahs from '../../data/surahs.json';
 ---
 <BaseLayout
-  title="আল-কুরআন | সূরা তালিকা"
-  description="আল-কুরআনের সূরা পরিচিতি দেখুন।"
+  title="আল-কুরআনের ১১৪টি সূরা | বাংলা সূরা তালিকা"
+  description="পবিত্র আল-কুরআনের ১১৪টি সূরার আরবি নাম, বাংলা নাম, উচ্চারণ, আয়াত সংখ্যা এবং নাযিলের স্থান দেখুন।"
 >
-  <h1>আল-কুরআন</h1>
-  <p class="muted">এই প্রাথমিক সংস্করণে প্রথম নমুনা সূরা পৃষ্ঠা যুক্ত করা হয়েছে। পূর্ণ ১১৪ সূরার তালিকা মূল অ্যাপের বিদ্যমান ডেটা যাচাই করে যুক্ত হবে।</p>
+  <h1>আল-কুরআনের ১১৪টি সূরা</h1>
+  <p class="muted">সূরার নাম, আয়াত সংখ্যা ও নাযিলের স্থানসহ সম্পূর্ণ সূরা তালিকা।</p>
   <div class="cards">
     {surahs.map((surah) => (
       <a class="card" href={`/quran/surah/${surah.slug}/`}>
-        <strong>{surah.number}. {surah.bn}</strong>
-        <p class="muted">{surah.en}</p>
+        <div class="surah-number">{surah.number}</div>
+        <div class="arabic" lang="ar">{surah.arabicName}</div>
+        <strong>{surah.bengaliName}</strong>
+        <p class="muted">{surah.transliteration}</p>
+        <small>{surah.ayahCount} আয়াত · {surah.revelation}</small>
       </a>
     ))}
   </div>
 </BaseLayout>
+<style>
+  .surah-number{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#e3f1ea;color:#0b5d45;font-weight:700}
+  .card{text-align:center}
+  .arabic{font-size:1.5rem;color:#0b5d45;line-height:1.8}
+  .card p{margin:2px 0}
+</style>

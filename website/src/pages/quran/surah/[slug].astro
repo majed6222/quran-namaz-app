@@ -126,7 +126,7 @@ const structuredData = {
     idgham_shafawi:'is', idghm_shfw:'is', idgham_mutajanisayn:'im', idgh_mus:'im',
     idgham_mutaqaribayn:'im', ghunnah:'gh', ghn:'gh'
   };
-  const normalizeArabic = (value) => String(value || '').normalize('NFKC').replace(/[\\s۞۩۝ـ]/g, '');
+  const normalizeArabic = (value) => String(value || '').normalize('NFKC').replace(/[\s۞۩۝ـ]/g, '');
   function tajweedFragment(markup, expectedText) {
     const parsed = new DOMParser().parseFromString('<div>' + markup + '</div>', 'text/html');
     const root = parsed.body.firstElementChild;

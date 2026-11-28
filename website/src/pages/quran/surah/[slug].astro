@@ -1,38 +1,62 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-const surahs = [
-  {
-    slug: 'al-fatiha',
-    number: 1,
-    nameBn: 'আল-ফাতিহা',
-    nameEn: 'Al-Fatihah',
-    meaning: 'সূচনা',
-    ayahCount: 7,
-    type: 'মাক্কী'
-  }
-];
+import surahs from '../../../data/surahs.json';
+
 export function getStaticPaths() {
-  return surahs.map((surah) => ({ params: { slug: surah.slug }, props: { surah } }));
+  return surahs.map((surah) => ({
+    params: { slug: surah.slug },
+    props: { surah }
+  }));
 }
+
 const { surah } = Astro.props;
+const description = `সূরা ${surah.bengaliName} (${surah.transliteration})। সূরা নম্বর ${surah.number}, ${surah.ayahCount} আয়াত, ${surah.revelation} সূরা।`;
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Chapter",
+  name: surah.transliteration,
+  alternateName: [surah.bengaliName, surah.arabicName],
+  position: surah.number,
+  isPartOf: { "@type": "Book", name: "আল-কুরআন" },
+  numberOfPages: surah.ayahCount
+};
 ---
 <BaseLayout
-  title={`সূরা ${surah.nameBn} | ${surah.nameEn}`}
-  description={`সূরা ${surah.nameBn} (${surah.nameEn})-এর পরিচিতি: ${surah.ayahCount} আয়াত, ${surah.type} সূরা।`}
+  title={`সূরা ${surah.bengaliName} (${surah.transliteration}) | আল-কুরআন`}
+  description={description}
 >
-  <p><a href="/quran/">← সূরা তালিকায় ফিরে যান</a></p>
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  <p><a href="/quran/">← ১১৪টি সূরার তালিকায় ফিরে যান</a></p>
   <section class="hero">
-    <h1>সূরা {surah.nameBn}</h1>
-    <p>{surah.nameEn} · সূরা নম্বর {surah.number}</p>
+    <p>সূরা নম্বর {surah.number}</p>
+    <h1>{surah.bengaliName}</h1>
+    <div class="arabic" lang="ar">{surah.arabicName}</div>
+    <p>{surah.transliteration}</p>
   </section>
   <section class="panel">
     <h2>সূরা পরিচিতি</h2>
-    <p><strong>অর্থ:</strong> {surah.meaning}</p>
-    <p><strong>আয়াত সংখ্যা:</strong> {surah.ayahCount}</p>
-    <p><strong>নাযিলের স্থান:</strong> {surah.type}</p>
+    <dl>
+      <dt>সূরা নম্বর</dt><dd>{surah.number}</dd>
+      <dt>বাংলা নাম</dt><dd>{surah.bengaliName}</dd>
+      <dt>আরবি নাম</dt><dd lang="ar" dir="rtl">{surah.arabicName}</dd>
+      <dt>উচ্চারণ</dt><dd>{surah.transliteration}</dd>
+      <dt>আয়াত সংখ্যা</dt><dd>{surah.ayahCount}</dd>
+      <dt>নাযিলের স্থান</dt><dd>{surah.revelation}</dd>
+    </dl>
   </section>
+  <nav class="surah-pager" aria-label="সূরা নেভিগেশন">
+    {surah.number > 1 && <a href={`/quran/surah/${surahs[surah.number - 2].slug}/`}>← আগের সূরা</a>}
+    {surah.number < 114 && <a href={`/quran/surah/${surahs[surah.number].slug}/`}>পরের সূরা →</a>}
+  </nav>
   <aside class="panel">
-    <strong>গুরুত্বপূর্ণ:</strong>
-    <p class="muted">এটি আপাতত পরিচিতিমূলক SEO পৃষ্ঠা। এখানে আরবি আয়াত, অনুবাদ বা তাফসির যোগ করা হয়নি। মূল অ্যাপের যাচাইকৃত ডেটা এবং উৎসের শর্ত যাচাই করে পরবর্তী ধাপে যুক্ত করা হবে।</p>
+    <strong>পাঠ-সংক্রান্ত নোট</strong>
+    <p class="muted">এই পৃষ্ঠায় বর্তমানে সূরার যাচাইকৃত পরিচিতিমূলক মেটাডেটা দেখানো হচ্ছে। আরবি আয়াত, অনুবাদ, তাফসির ও তিলাওয়াত পরবর্তী ধাপে মূল অ্যাপের ডেটা উৎস ও লাইসেন্স যাচাই করে যুক্ত করা হবে।</p>
   </aside>
 </BaseLayout>
+<style>
+  dl{display:grid;grid-template-columns:minmax(110px,170px) 1fr;gap:8px 14px}
+  dt{color:#5d6b64}dd{margin:0;font-weight:600}
+  .surah-pager{display:flex;justify-content:space-between;gap:12px;margin:18px 0}
+  .surah-pager a{padding:10px 14px;border:1px solid #e4ddc9;border-radius:10px;text-decoration:none}
+  @media(max-width:480px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+</style>

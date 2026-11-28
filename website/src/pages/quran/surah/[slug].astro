@@ -3,60 +3,159 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import surahs from '../../../data/surahs.json';
 
 export function getStaticPaths() {
-  return surahs.map((surah) => ({
-    params: { slug: surah.slug },
-    props: { surah }
-  }));
+  return surahs.map((surah) => ({ params: { slug: surah.slug }, props: { surah } }));
 }
-
 const { surah } = Astro.props;
-const description = `সূরা ${surah.bengaliName} (${surah.transliteration})। সূরা নম্বর ${surah.number}, ${surah.ayahCount} আয়াত, ${surah.revelation} সূরা।`;
+const description = `সূরা ${surah.bengaliName} (${surah.transliteration})। ${surah.ayahCount} আয়াতের আরবি পাঠ ও বাংলা অনুবাদ।`;
 const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "Chapter",
-  name: surah.transliteration,
-  alternateName: [surah.bengaliName, surah.arabicName],
-  position: surah.number,
-  isPartOf: { "@type": "Book", name: "আল-কুরআন" },
+  "@context": "https://schema.org", "@type": "Chapter",
+  name: surah.transliteration, alternateName: [surah.bengaliName, surah.arabicName],
+  position: surah.number, isPartOf: { "@type": "Book", name: "আল-কুরআন" },
   numberOfPages: surah.ayahCount
 };
 ---
-<BaseLayout
-  title={`সূরা ${surah.bengaliName} (${surah.transliteration}) | আল-কুরআন`}
-  description={description}
->
+<BaseLayout title={`সূরা ${surah.bengaliName} (${surah.transliteration}) | আল-কুরআন`} description={description}>
   <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
   <p><a href="/quran/">← ১১৪টি সূরার তালিকায় ফিরে যান</a></p>
   <section class="hero">
-    <p>সূরা নম্বর {surah.number}</p>
+    <p>সূরা নম্বর {surah.number} · {surah.revelation} · {surah.ayahCount} আয়াত</p>
     <h1>{surah.bengaliName}</h1>
     <div class="arabic" lang="ar">{surah.arabicName}</div>
     <p>{surah.transliteration}</p>
   </section>
-  <section class="panel">
-    <h2>সূরা পরিচিতি</h2>
-    <dl>
-      <dt>সূরা নম্বর</dt><dd>{surah.number}</dd>
-      <dt>বাংলা নাম</dt><dd>{surah.bengaliName}</dd>
-      <dt>আরবি নাম</dt><dd lang="ar" dir="rtl">{surah.arabicName}</dd>
-      <dt>উচ্চারণ</dt><dd>{surah.transliteration}</dd>
-      <dt>আয়াত সংখ্যা</dt><dd>{surah.ayahCount}</dd>
-      <dt>নাযিলের স্থান</dt><dd>{surah.revelation}</dd>
-    </dl>
+  <section class="reader-tools" aria-label="পাঠ নিয়ন্ত্রণ">
+    <label for="translation">বাংলা অনুবাদ</label>
+    <select id="translation"><option value="auto">স্বয়ংক্রিয়ভাবে নির্বাচন</option></select>
+    <button id="load-reader" type="button">আয়াত লোড করুন</button>
+    <button id="font-down" type="button" aria-label="আরবি লেখা ছোট করুন">A−</button>
+    <button id="font-up" type="button" aria-label="আরবি লেখা বড় করুন">A+</button>
   </section>
+  <p id="reader-status" class="status" role="status" aria-live="polite">আরবি আয়াত ও বাংলা অনুবাদ লোড হচ্ছে…</p>
+  <section id="ayah-list" aria-label="কুরআনের আয়াত"></section>
   <nav class="surah-pager" aria-label="সূরা নেভিগেশন">
     {surah.number > 1 && <a href={`/quran/surah/${surahs[surah.number - 2].slug}/`}>← আগের সূরা</a>}
     {surah.number < 114 && <a href={`/quran/surah/${surahs[surah.number].slug}/`}>পরের সূরা →</a>}
   </nav>
-  <aside class="panel">
-    <strong>পাঠ-সংক্রান্ত নোট</strong>
-    <p class="muted">এই পৃষ্ঠায় বর্তমানে সূরার যাচাইকৃত পরিচিতিমূলক মেটাডেটা দেখানো হচ্ছে। আরবি আয়াত, অনুবাদ, তাফসির ও তিলাওয়াত পরবর্তী ধাপে মূল অ্যাপের ডেটা উৎস ও লাইসেন্স যাচাই করে যুক্ত করা হবে।</p>
-  </aside>
+  <p class="source-note">ডেটা উৎস: Quran.com API v4; অনুবাদের বিকল্প উৎস হিসেবে alquran.cloud। অনুবাদ ও আরবি পাঠ প্রদর্শনের আগে নিজ দায়িত্বে নির্ভরযোগ্য মুদ্রিত মুসহাফ/অনুবাদের সঙ্গে মিলিয়ে নিন। নেটওয়ার্ক সংযোগ প্রয়োজন; এই পর্যায়ে পূর্ণ অফলাইন পাঠ বা অডিও যুক্ত হয়নি।</p>
 </BaseLayout>
+
+<script define:vars={{ surahNumber: surah.number, ayahCount: surah.ayahCount }}>
+  const api = 'https://api.quran.com/api/v4';
+  const fallback = 'https://api.alquran.cloud/v1';
+  const list = document.querySelector('#ayah-list');
+  const status = document.querySelector('#reader-status');
+  const selector = document.querySelector('#translation');
+  const storageKey = 'quran-reader-bookmarks-v1';
+  let fontSize = 34;
+  const bn = (value) => String(value).replace(/\\d/g, d => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+  const safeGet = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('সার্ভার সাড়া দেয়নি (HTTP ' + response.status + ')');
+    return response.json();
+  };
+  const bookmarks = () => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
+    catch { return []; }
+  };
+  const setStatus = (message) => { status.textContent = message; };
+  const addAyah = (number, arabic, translation) => {
+    const article = document.createElement('article');
+    article.className = 'ayah panel';
+    article.id = 'ayah-' + number;
+    const heading = document.createElement('div');
+    heading.className = 'ayah-heading';
+    heading.textContent = 'আয়াত ' + bn(number);
+    const ar = document.createElement('p');
+    ar.className = 'ayah-arabic';
+    ar.lang = 'ar'; ar.dir = 'rtl'; ar.textContent = arabic;
+    ar.style.fontSize = fontSize + 'px';
+    const tr = document.createElement('p');
+    tr.className = 'ayah-translation'; tr.textContent = translation || 'এই আয়াতের অনুবাদ পাওয়া যায়নি।';
+    const actions = document.createElement('div'); actions.className = 'ayah-actions';
+    const mark = document.createElement('button'); mark.type = 'button';
+    const key = surahNumber + ':' + number;
+    const refreshMark = () => { mark.textContent = bookmarks().includes(key) ? '★ বুকমার্ক করা' : '☆ বুকমার্ক'; };
+    refreshMark();
+    mark.addEventListener('click', () => {
+      const saved = bookmarks();
+      const next = saved.includes(key) ? saved.filter(item => item !== key) : [...saved, key];
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); refreshMark(); }
+      catch { setStatus('বুকমার্ক সংরক্ষণ করা যায়নি—ব্রাউজারের স্টোরেজ পরীক্ষা করুন।'); }
+    });
+    const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'আয়াত কপি';
+    copy.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(arabic + '\\n' + tr.textContent); setStatus('আয়াত কপি হয়েছে।'); }
+      catch { setStatus('কপি করা যায়নি। ব্রাউজারের অনুমতি পরীক্ষা করুন।'); }
+    });
+    actions.append(mark, copy);
+    article.append(heading, ar, tr, actions);
+    list.append(article);
+  };
+  async function load() {
+    list.replaceChildren();
+    setStatus('আয়াত ও অনুবাদ আনা হচ্ছে…');
+    try {
+      const translationList = await safeGet(api + '/resources/translations');
+      const bengali = (translationList.translations || []).filter(item =>
+        String(item.language_name || '').toLowerCase().includes('bengali') ||
+        String(item.language_name || '').toLowerCase().includes('bangla')
+      );
+      bengali.sort((a,b) => Number(/muhiuddin/i.test((a.author || '') + ' ' + (a.name || ''))) * -1);
+      selector.replaceChildren();
+      const auto = document.createElement('option'); auto.value = 'auto'; auto.textContent = 'স্বয়ংক্রিয় (প্রস্তাবিত)'; selector.append(auto);
+      bengali.forEach(item => {
+        const option = document.createElement('option');
+        option.value = String(item.id); option.textContent = (item.name || 'বাংলা অনুবাদ') + (item.author ? ' — ' + item.author : '');
+        selector.append(option);
+      });
+      const [arabicResult, chosenTranslation] = await Promise.all([
+        safeGet(api + '/quran/verses/uthmani?chapter_number=' + surahNumber),
+        (async () => {
+          const selected = selector.value === 'auto' ? (bengali[0]?.id) : Number(selector.value);
+          if (selected) {
+            try { return await safeGet(api + '/quran/translations/' + selected + '?chapter_number=' + surahNumber); }
+            catch {}
+          }
+          return safeGet(fallback + '/surah/' + surahNumber + '/bn.bengali');
+        })()
+      ]);
+      const arabicVerses = arabicResult.verses || [];
+      const translated = chosenTranslation.translations
+        ? chosenTranslation.translations.map(item => String(item.text || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim())
+        : (chosenTranslation.data?.ayahs || []).map(item => item.text || '');
+      if (arabicVerses.length !== ayahCount) throw new Error('আরবি আয়াত সংখ্যা মেটাডেটার সঙ্গে মেলেনি; নিরাপত্তার জন্য পাঠ দেখানো হয়নি।');
+      if (translated.length !== ayahCount) throw new Error('বাংলা অনুবাদের আয়াত সংখ্যা মেলেনি; নিরাপত্তার জন্য পাঠ দেখানো হয়নি।');
+      arabicVerses.forEach((verse, index) => addAyah(index + 1, verse.text_uthmani, translated[index]));
+      setStatus('মোট ' + bn(ayahCount) + 'টি আয়াত লোড হয়েছে। অনুবাদ: ' + (bengali.find(x => String(x.id) === String(selector.value))?.name || 'বাংলা বিকল্প উৎস'));
+    } catch (error) {
+      setStatus('পাঠ লোড করা যায়নি: ' + (error?.message || 'অজানা সমস্যা') + '। ইন্টারনেট সংযোগ দিয়ে আবার চেষ্টা করুন।');
+    }
+  }
+  document.querySelector('#load-reader').addEventListener('click', load);
+  selector.addEventListener('change', load);
+  document.querySelector('#font-up').addEventListener('click', () => {
+    fontSize = Math.min(54, fontSize + 2);
+    document.querySelectorAll('.ayah-arabic').forEach(node => node.style.fontSize = fontSize + 'px');
+  });
+  document.querySelector('#font-down').addEventListener('click', () => {
+    fontSize = Math.max(24, fontSize - 2);
+    document.querySelectorAll('.ayah-arabic').forEach(node => node.style.fontSize = fontSize + 'px');
+  });
+  load();
+</script>
+
 <style>
-  dl{display:grid;grid-template-columns:minmax(110px,170px) 1fr;gap:8px 14px}
-  dt{color:#5d6b64}dd{margin:0;font-weight:600}
+  .reader-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border:1px solid #e4ddc9;border-radius:14px;padding:12px;margin:16px 0}
+  .reader-tools button,.ayah-actions button{border:1px solid #0b5d45;background:#fff;color:#0b5d45;border-radius:9px;padding:7px 12px;cursor:pointer}
+  .reader-tools select{max-width:min(100%,360px);padding:8px;border:1px solid #cfc7b5;border-radius:8px}
+  .status{padding:10px 14px;background:#f4ead0;border-radius:10px}
+  .ayah.panel{padding:18px;margin:12px 0}
+  .ayah-heading{font-weight:700;color:#0b5d45;border-bottom:1px solid #e4ddc9;padding-bottom:8px}
+  .ayah-arabic{font-family:"Amiri Quran","Noto Naskh Arabic","Traditional Arabic",serif;direction:rtl;text-align:right;line-height:2.2;overflow-wrap:anywhere;margin:14px 0}
+  .ayah-translation{font-size:1.05rem;line-height:2;color:#293b32}
+  .ayah-actions{display:flex;gap:8px;flex-wrap:wrap}
   .surah-pager{display:flex;justify-content:space-between;gap:12px;margin:18px 0}
   .surah-pager a{padding:10px 14px;border:1px solid #e4ddc9;border-radius:10px;text-decoration:none}
-  @media(max-width:480px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+  .source-note{font-size:.9rem;color:#5d6b64;border-top:1px solid #e4ddc9;padding-top:14px}
+  @media(max-width:560px){.reader-tools{align-items:stretch}.reader-tools select{flex:1;min-width:100%}}
 </style>

@@ -56,6 +56,11 @@ const structuredData = {
     <p class="audio-note">অডিও সূত্র: EveryAyah.com। অডিও ফাইল ইন্টারনেট থেকে স্ট্রিম হবে; এই ধাপে ডাউনলোড বা অফলাইন অডিও যুক্ত হয়নি।</p>
   </section>
   <p id="reader-status" class="status" role="status" aria-live="polite">আরবি আয়াত ও বাংলা অনুবাদ লোড হচ্ছে…</p>
+  <section class="reading-progress panel" aria-label="পাঠের অগ্রগতি">
+    <div><strong>এই সূরার পাঠের অগ্রগতি</strong> <span id="progress-count">০ / {surah.ayahCount}</span></div>
+    <progress id="progress-bar" max={surah.ayahCount} value="0"></progress>
+    <p class="muted">যে আয়াত পড়া শেষ করবেন, সেটি “পড়া হয়েছে” হিসেবে চিহ্নিত করুন। অগ্রগতি এই ডিভাইসের ব্রাউজারে সংরক্ষিত থাকবে।</p>
+  </section>
   <p id="tajweed-status" class="status" role="status" aria-live="polite" hidden></p>
   <section id="tajweed-legend" class="tajweed-legend panel" hidden>
     <strong>তাজবিদ রঙের নির্দেশিকা</strong>
@@ -94,6 +99,9 @@ const structuredData = {
   const status = document.querySelector('#reader-status');
   const selector = document.querySelector('#translation');
   const storageKey = 'quran-reader-bookmarks-v1';
+  const progressKey = 'quran-reader-progress-v1';
+  const progressCount = document.querySelector('#progress-count');
+  const progressBar = document.querySelector('#progress-bar');
   const qariKey = 'quran-reader-qari-v1';
   const tafsirKey = 'quran-reader-tafsir-v1';
   const tafsirSource = document.querySelector('#tafsir-source');
@@ -133,6 +141,18 @@ const structuredData = {
   const bookmarks = () => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
     catch { return []; }
+  };
+  const readProgress = () => {
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || '{}');
+      return data && typeof data === 'object' ? data : {};
+    } catch { return {}; }
+  };
+  const updateProgressSummary = () => {
+    const data = readProgress();
+    const read = Array.isArray(data[surahNumber]) ? data[surahNumber] : [];
+    progressCount.textContent = bn(read.length) + ' / ' + bn(ayahCount) + ' আয়াত';
+    progressBar.value = Math.min(ayahCount, read.length);
   };
   const setStatus = (message) => { status.textContent = message; };
   const appendSafeTafsir = (markup, target) => {
@@ -283,12 +303,33 @@ const structuredData = {
     });
     const listen = document.createElement('button'); listen.type = 'button'; listen.textContent = '▶ শুনুন';
     listen.addEventListener('click', () => playAyah(number));
+    const readButton = document.createElement('button');
+    readButton.type = 'button';
+    const refreshReadButton = () => {
+      const data = readProgress();
+      const read = Array.isArray(data[surahNumber]) ? data[surahNumber] : [];
+      const done = read.includes(number);
+      readButton.textContent = done ? '✓ পড়া হয়েছে' : 'পড়া হয়েছে';
+      readButton.setAttribute('aria-pressed', String(done));
+      readButton.classList.toggle('is-read', done);
+    };
+    refreshReadButton();
+    readButton.addEventListener('click', () => {
+      const data = readProgress();
+      const read = Array.isArray(data[surahNumber]) ? data[surahNumber] : [];
+      data[surahNumber] = read.includes(number) ? read.filter(value => value !== number) : [...read, number].sort((a,b) => a-b);
+      try {
+        localStorage.setItem(progressKey, JSON.stringify(data));
+        refreshReadButton();
+        updateProgressSummary();
+      } catch { setStatus('পাঠের অগ্রগতি সংরক্ষণ করা যায়নি—ব্রাউজারের স্টোরেজ পরীক্ষা করুন।'); }
+    });
     const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'আয়াত কপি';
     copy.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(arabic + '\\n' + tr.textContent); setStatus('আয়াত কপি হয়েছে।'); }
       catch { setStatus('কপি করা যায়নি। ব্রাউজারের অনুমতি পরীক্ষা করুন।'); }
     });
-    actions.append(listen, mark, copy);
+    actions.append(listen, mark, readButton, copy);
     article.append(heading, ar, tr, actions);
     list.append(article);
   };
@@ -374,6 +415,7 @@ const structuredData = {
       tajweedLegend.hidden = true;
       tajweedStatus.hidden = true;
       arabicVerses.forEach((verse, index) => addAyah(index + 1, verse.text_uthmani, translated[index]));
+      updateProgressSummary();
       setStatus('মোট ' + bn(ayahCount) + 'টি আয়াত লোড হয়েছে। অনুবাদ: ' + (bengali.find(x => String(x.id) === String(selector.value))?.name || 'বাংলা বিকল্প উৎস'));
     } catch (error) {
       setStatus('পাঠ লোড করা যায়নি: ' + (error?.message || 'অজানা সমস্যা') + '। ইন্টারনেট সংযোগ দিয়ে আবার চেষ্টা করুন।');
@@ -464,6 +506,11 @@ const structuredData = {
   .ayah-arabic{font-family:"Amiri Quran","Noto Naskh Arabic","Traditional Arabic",serif;direction:rtl;text-align:right;line-height:2.2;overflow-wrap:anywhere;margin:14px 0}
   .ayah-translation{font-size:1.05rem;line-height:2;color:#293b32}
   .ayah-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .ayah-actions button.is-read{background:#e4f4eb;color:#075b3e;border-color:#9ccfb3}
+  .reading-progress{padding:12px 16px;margin:12px 0}
+  .reading-progress>div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .reading-progress progress{display:block;width:100%;height:12px;margin:8px 0;accent-color:#0b5d45}
+  .reading-progress .muted{font-size:.88rem;margin:4px 0 0}
   .surah-pager{display:flex;justify-content:space-between;gap:12px;margin:18px 0}
   .surah-pager a{padding:10px 14px;border:1px solid #e4ddc9;border-radius:10px;text-decoration:none}
   .source-note{font-size:.9rem;color:#5d6b64;border-top:1px solid #e4ddc9;padding-top:14px}

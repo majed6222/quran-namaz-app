@@ -2,7 +2,7 @@ import surahs from '../data/surahs.json';
 
 export const prerender = true;
 
-const SITE = 'https://example.pages.dev';
+const SITE = import.meta.env.SITE || 'https://example.pages.dev';
 
 export async function GET() {
   const paths = [

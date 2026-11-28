@@ -56,3 +56,18 @@
 - Never overwrite user data or change storage keys without a versioned migration and backup.
 - Never fabricate Quran text, hadith references, translations or scholarly approvals.
 - No backend or account system is required for the initial local-first release.
+
+## Progress update — 28 November 2026
+
+- [x] Astro shell and Bengali-first layout added under `website/`.
+- [x] Static metadata pages generated for all 114 surahs.
+- [x] Sitemap and robots.txt added (replace the example domain before deployment).
+- [x] First Quran reader integration added to each surah page: Arabic Uthmani text, selectable Bengali translation where available, font-size controls, ayah copy and device-local bookmarks.
+- [ ] Run and pass `npm run build` in a network-enabled environment.
+- [ ] Verify Quran.com/alquran.cloud API responses, translation metadata and rendered text against trusted printed editions.
+- [ ] Add audio playback, tajweed, tafsir and reading-progress integration after source/licensing review.
+- [ ] Integrate the existing Namaz and Dua modules and preserve legacy user data.
+- [ ] Complete mobile/browser, accessibility, offline and backup/restore tests.
+- [ ] Set the real `SITE_URL`, deploy a preview, and obtain user approval before production cutover.
+
+The new reader currently depends on an internet connection. It does not yet provide offline Quran text, audio playback, tajweed highlighting or tafsir. Bookmarks are stored locally in the browser under a new key and are not synchronized between devices.

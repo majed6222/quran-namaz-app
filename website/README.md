@@ -35,4 +35,4 @@ Configure the hosting provider with:
 - Build command: `npm run build`
 - Output directory: `dist`
 
-Update `site` in `astro.config.mjs` to the actual production URL before deployment.
+Set the `SITE_URL` environment variable to the actual production URL before deployment. Until then, the build uses the placeholder `https://example.pages.dev`; replace the same placeholder in `website/public/robots.txt` before publishing. Canonical URLs and the sitemap use the configured Astro site URL.

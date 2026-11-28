@@ -65,7 +65,8 @@
 - [x] First Quran reader integration added to each surah page: Arabic Uthmani text, selectable Bengali translation where available, font-size controls, ayah copy and device-local bookmarks.
 - [ ] Run and pass `npm run build` in a network-enabled environment.
 - [ ] Verify Quran.com/alquran.cloud API responses, translation metadata and rendered text against trusted printed editions.
-- [ ] Add audio playback, tajweed, tafsir and reading-progress integration after source/licensing review.
+- [x] Add the initial ayah-by-ayah audio player and opt-in tajweed color display (implementation added; source verification and browser testing remain pending).
+- [ ] Add tafsir and reading-progress integration after source/licensing review.
 - [ ] Integrate the existing Namaz and Dua modules and preserve legacy user data.
 - [ ] Complete mobile/browser, accessibility, offline and backup/restore tests.
 - [ ] Set the real `SITE_URL`, deploy a preview, and obtain user approval before production cutover.
@@ -90,3 +91,19 @@ This is an implementation milestone only; no successful browser playback or prod
 
 - [x] Added `.github/workflows/astro-build.yml` to run `npm install` and `npm run build` on pushes to `astro-migration` that change the website, and via manual dispatch.
 - [ ] Confirm the first GitHub Actions run completes successfully. The workflow file is committed, but its run result has not yet been confirmed.
+
+
+### Step 2 — Tajweed color display (implementation added)
+
+- [x] Added an opt-in “তাজবিদের রং দেখান” control to each Surah reader page.
+- [x] Fetches Quran.com API v4 `uthmani_tajweed` data only when the user enables the feature.
+- [x] Maps recognized tajweed rule classes to a Bengali color legend.
+- [x] Compares each color-coded ayah's text with the plain Uthmani ayah before applying colors; a mismatch leaves that ayah uncolored.
+- [x] Builds the display using DOM nodes and text nodes rather than inserting the API markup as raw HTML.
+- [ ] Verify the API response and text-matching behavior across short and long Surahs.
+- [ ] Review the color mapping/legend with a qualified tajweed teacher; colors are learning aids, not a substitute for instruction.
+- [ ] Test toggle behavior, mobile layout, accessibility and network/API failure handling in a browser.
+
+Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
+
+The tajweed feature is implemented but not yet browser- or scholarly-verified. The GitHub Actions build passed for the first tajweed implementation commit; a subsequent small normalization fix is awaiting its own build run.

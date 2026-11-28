@@ -199,7 +199,7 @@ const structuredData = {
       appendSafeTafsir(text, body);
       if (!body.textContent.trim()) throw new Error('তাফসিরের পাঠ খালি এসেছে।');
       tafsirResult.append(heading, body);
-      localStorage.setItem(tafsirKey, sourceId);
+      try { localStorage.setItem(tafsirKey, sourceId); } catch {}
       tafsirStatus.textContent = 'তাফসির লোড হয়েছে।';
     } catch (error) {
       tafsirStatus.textContent = 'তাফসির লোড হয়নি: ' + (error?.message || 'অজানা সমস্যা');

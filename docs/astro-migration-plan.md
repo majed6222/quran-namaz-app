@@ -67,7 +67,8 @@
 - [ ] Verify Quran.com/alquran.cloud API responses, translation metadata and rendered text against trusted printed editions.
 - [x] Add the initial ayah-by-ayah audio player and opt-in tajweed color display (implementation added; source verification and browser testing remain pending).
 - [x] Add initial ayah-by-ayah Bengali tafsir selection and reader (implementation added; source verification/browser tests pending).
-- [ ] Integrate reading progress and review tafsir source/licensing.
+- [x] Add device-local per-ayah reading progress to the new reader (implementation added; browser testing pending).
+- [ ] Review tafsir source/licensing and test progress persistence across sessions.
 - [ ] Integrate the existing Namaz and Dua modules and preserve legacy user data.
 - [ ] Complete mobile/browser, accessibility, offline and backup/restore tests.
 - [ ] Set the real `SITE_URL`, deploy a preview, and obtain user approval before production cutover.
@@ -124,3 +125,12 @@ The tajweed feature is implemented but not yet browser- or scholarly-verified. T
 Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
 
 This is an initial API-backed reader, not a scholarly endorsement or independent verification of the tafsir content.
+
+
+### Step 4 — Local Surah reading progress (implementation added)
+
+- [x] Added a per-ayah “পড়া হয়েছে” toggle.
+- [x] Added a Surah-level progress count and progress bar.
+- [x] Stores progress locally under `quran-reader-progress-v1`; no account or server storage is used.
+- [ ] Test persistence after reload, duplicate toggles, storage-disabled mode and mobile display.
+- [ ] Decide later whether to migrate compatible legacy `hqn_` progress data; no legacy storage keys have been changed.

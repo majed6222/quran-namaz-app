@@ -66,6 +66,20 @@ const structuredData = {
     <p class="muted">রঙগুলো শেখার সহায়ক মাত্র; সঠিক মাখরাজ ও তাজবিদের জন্য যোগ্য শিক্ষকের কাছে শিখুন।</p>
   </section>
   <section id="ayah-list" aria-label="কুরআনের আয়াত"></section>
+  <section class="tafsir panel" aria-labelledby="tafsir-heading">
+    <h2 id="tafsir-heading">তাফসির</h2>
+    <p>নির্বাচিত বাংলা তাফসির থেকে আয়াতভিত্তিক ব্যাখ্যা পড়ুন।</p>
+    <div class="tafsir-controls">
+      <label for="tafsir-source">তাফসিরের উৎস</label>
+      <select id="tafsir-source"><option value="">তালিকা লোড করতে চাপ দিন</option></select>
+      <label for="tafsir-ayah">আয়াত নম্বর</label>
+      <input id="tafsir-ayah" type="number" min="1" max={surah.ayahCount} value="1" />
+      <button id="load-tafsir" type="button">তাফসির দেখুন</button>
+    </div>
+    <p id="tafsir-status" class="status" role="status" aria-live="polite">তাফসির পড়তে উৎস নির্বাচন করে দেখুন।</p>
+    <article id="tafsir-result" class="tafsir-result" aria-live="polite"></article>
+    <p class="source-note">তাফসিরকারের ব্যাখ্যা মূল কুরআনের পাঠ ও অনুবাদ থেকে পৃথক। মতভেদপূর্ণ বিষয়ে নির্ভরযোগ্য আলেমের পরামর্শ নিন।</p>
+  </section>
   <nav class="surah-pager" aria-label="সূরা নেভিগেশন">
     {surah.number > 1 && <a href={`/quran/surah/${surahs[surah.number - 2].slug}/`}>← আগের সূরা</a>}
     {surah.number < 114 && <a href={`/quran/surah/${surahs[surah.number].slug}/`}>পরের সূরা →</a>}
@@ -81,6 +95,11 @@ const structuredData = {
   const selector = document.querySelector('#translation');
   const storageKey = 'quran-reader-bookmarks-v1';
   const qariKey = 'quran-reader-qari-v1';
+  const tafsirKey = 'quran-reader-tafsir-v1';
+  const tafsirSource = document.querySelector('#tafsir-source');
+  const tafsirAyah = document.querySelector('#tafsir-ayah');
+  const tafsirStatus = document.querySelector('#tafsir-status');
+  const tafsirResult = document.querySelector('#tafsir-result');
   const tajweedStatus = document.querySelector('#tajweed-status');
   const tajweedLegend = document.querySelector('#tajweed-legend');
   const tajweedButton = document.querySelector('#toggle-tajweed');
@@ -116,6 +135,76 @@ const structuredData = {
     catch { return []; }
   };
   const setStatus = (message) => { status.textContent = message; };
+  const appendSafeTafsir = (markup, target) => {
+    const parsed = new DOMParser().parseFromString('<div>' + String(markup || '') + '</div>', 'text/html');
+    const allowed = new Set(['P','BR','STRONG','B','EM','I','UL','OL','LI','H3','H4','BLOCKQUOTE']);
+    const copy = (source, parent) => {
+      for (const node of source.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) parent.append(document.createTextNode(node.textContent || ''));
+        else if (node.nodeType === Node.ELEMENT_NODE) {
+          if (allowed.has(node.tagName)) {
+            const safe = document.createElement(node.tagName.toLowerCase());
+            copy(node, safe);
+            parent.append(safe);
+          } else copy(node, parent);
+        }
+      }
+    };
+    copy(parsed.body.firstElementChild || parsed.body, target);
+  };
+  async function loadTafsirSources() {
+    tafsirStatus.textContent = 'বাংলা তাফসিরের তালিকা আনা হচ্ছে…';
+    try {
+      const data = await safeGet(api + '/resources/tafsirs');
+      const sources = (data.tafsirs || []).filter(item =>
+        /bengali|bangla/i.test(String(item.language_name || ''))
+      );
+      if (!sources.length) throw new Error('বাংলা তাফসিরের তালিকা পাওয়া যায়নি।');
+      tafsirSource.replaceChildren();
+      sources.forEach(item => {
+        const option = document.createElement('option');
+        option.value = String(item.id);
+        option.textContent = (item.name || 'বাংলা তাফসির') + (item.author_name ? ' — ' + item.author_name : '');
+        tafsirSource.append(option);
+      });
+      const saved = localStorage.getItem(tafsirKey);
+      if (saved && sources.some(item => String(item.id) === saved)) tafsirSource.value = saved;
+      tafsirStatus.textContent = 'বাংলা তাফসিরের ' + bn(sources.length) + 'টি উৎস পাওয়া গেছে।';
+      return true;
+    } catch (error) {
+      tafsirStatus.textContent = 'তাফসিরের তালিকা লোড হয়নি: ' + (error?.message || 'অজানা সমস্যা');
+      return false;
+    }
+  }
+  async function showTafsir() {
+    const ayah = Number(tafsirAyah.value);
+    if (!tafsirSource.value) {
+      if (!await loadTafsirSources()) return;
+    }
+    if (!Number.isInteger(ayah) || ayah < 1 || ayah > ayahCount) {
+      tafsirStatus.textContent = 'আয়াত নম্বর ১ থেকে ' + bn(ayahCount) + '-এর মধ্যে দিন।';
+      return;
+    }
+    tafsirStatus.textContent = 'তাফসির লোড হচ্ছে…';
+    tafsirResult.replaceChildren();
+    try {
+      const sourceId = tafsirSource.value;
+      const data = await safeGet(api + '/tafsirs/' + encodeURIComponent(sourceId) + '/by_ayah/' + surahNumber + ':' + ayah);
+      const text = data.tafsir?.text;
+      if (!text) throw new Error('এই আয়াতের জন্য নির্বাচিত উৎসে তাফসির পাওয়া যায়নি।');
+      const heading = document.createElement('h3');
+      heading.textContent = 'সূরা ' + bn(surahNumber) + ', আয়াত ' + bn(ayah);
+      const body = document.createElement('div');
+      body.className = 'tafsir-text';
+      appendSafeTafsir(text, body);
+      if (!body.textContent.trim()) throw new Error('তাফসিরের পাঠ খালি এসেছে।');
+      tafsirResult.append(heading, body);
+      localStorage.setItem(tafsirKey, sourceId);
+      tafsirStatus.textContent = 'তাফসির লোড হয়েছে।';
+    } catch (error) {
+      tafsirStatus.textContent = 'তাফসির লোড হয়নি: ' + (error?.message || 'অজানা সমস্যা');
+    }
+  }
   const tajweedClass = {
     ham_wasl:'ham', hamzat_wasl:'ham', slnt:'ham', silent:'ham',
     laam_shamsiyah:'ham', lam_shamsiyyah:'ham',
@@ -292,6 +381,17 @@ const structuredData = {
   }
   document.querySelector('#load-reader').addEventListener('click', load);
   selector.addEventListener('change', load);
+  tafsirSource.addEventListener('focus', () => { if (!tafsirSource.options.length || !tafsirSource.value) loadTafsirSources(); }, { once: true });
+  document.querySelector('#load-tafsir').addEventListener('click', async () => {
+    if (!tafsirSource.value) {
+      if (!await loadTafsirSources()) return;
+    }
+    showTafsir();
+  });
+  tafsirSource.addEventListener('change', () => {
+    try { localStorage.setItem(tafsirKey, tafsirSource.value); } catch {}
+    if (tafsirResult.childNodes.length) showTafsir();
+  });
   tajweedButton.addEventListener('click', async () => {
     if (tajweedEnabled) {
       tajweedEnabled = false;
@@ -329,6 +429,15 @@ const structuredData = {
 </script>
 
 <style>
+  .tafsir{margin:18px 0;padding:16px}
+  .tafsir h2{margin-top:0}
+  .tafsir-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .tafsir-controls select,.tafsir-controls input{max-width:100%;padding:8px;border:1px solid #cfc7b5;border-radius:8px}
+  .tafsir-controls select{min-width:min(260px,100%)}
+  .tafsir-controls button{border:1px solid #0b5d45;background:#0b5d45;color:white;border-radius:9px;padding:8px 14px;cursor:pointer}
+  .tafsir-result{line-height:1.9}
+  .tafsir-text{overflow-wrap:anywhere}
+  .tafsir-text p{margin:10px 0}
   .audio-player{margin:16px 0}
   .tajweed-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px;margin:12px 0}
   .tajweed-legend strong{width:100%}

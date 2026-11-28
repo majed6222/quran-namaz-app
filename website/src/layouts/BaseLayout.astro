@@ -14,6 +14,11 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}
     <meta name="theme-color" content="#0b5d45" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="bn_BD" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
     <header class="site-header">

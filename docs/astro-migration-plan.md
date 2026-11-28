@@ -63,7 +63,7 @@
 - [x] Static metadata pages generated for all 114 surahs.
 - [x] Sitemap and robots.txt added (replace the example domain before deployment).
 - [x] First Quran reader integration added to each surah page: Arabic Uthmani text, selectable Bengali translation where available, font-size controls, ayah copy and device-local bookmarks.
-- [ ] Run and pass `npm run build` in a network-enabled environment.
+- [x] Run and pass `npm run build` through GitHub Actions on the current reader implementation (latest checked code commit: `2ba460d7`).
 - [ ] Verify Quran.com/alquran.cloud API responses, translation metadata and rendered text against trusted printed editions.
 - [x] Add the initial ayah-by-ayah audio player and opt-in tajweed color display (implementation added; source verification and browser testing remain pending).
 - [x] Add initial ayah-by-ayah Bengali tafsir selection and reader (implementation added; source verification/browser tests pending).
@@ -124,7 +124,7 @@ The tajweed feature is implemented but not yet browser- or scholarly-verified. T
 
 Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
 
-This is an initial API-backed reader, not a scholarly endorsement or independent verification of the tafsir content.
+This is an initial API-backed reader, not a scholarly endorsement or independent verification of the tafsir content. GitHub Actions static build passed after this feature was added.
 
 
 ### Step 4 — Local Surah reading progress (implementation added)
@@ -134,3 +134,10 @@ This is an initial API-backed reader, not a scholarly endorsement or independent
 - [x] Stores progress locally under `quran-reader-progress-v1`; no account or server storage is used.
 - [ ] Test persistence after reload, duplicate toggles, storage-disabled mode and mobile display.
 - [ ] Decide later whether to migrate compatible legacy `hqn_` progress data; no legacy storage keys have been changed.
+
+
+### Build verification update — 28 November 2026
+
+- [x] GitHub Actions build completed successfully for the reader containing the initial audio, tajweed, tafsir and local reading-progress implementations.
+- [x] Confirmed all changes remain on `astro-migration`; `main` still points to its original commit at the time of this check.
+- [ ] Browser-level functional testing is still required. A successful static build does not prove external APIs, MP3 files, audio playback, or the rendered Arabic/translation/tafsir content are correct.

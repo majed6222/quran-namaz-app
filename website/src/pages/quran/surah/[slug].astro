@@ -30,6 +30,30 @@ const structuredData = {
     <button id="font-down" type="button" aria-label="আরবি লেখা ছোট করুন">A−</button>
     <button id="font-up" type="button" aria-label="আরবি লেখা বড় করুন">A+</button>
   </section>
+  <section class="audio-player panel" aria-label="তিলাওয়াত অডিও প্লেয়ার">
+    <h2>আয়াতভিত্তিক তিলাওয়াত</h2>
+    <label for="reciter">ক্বারি নির্বাচন</label>
+    <select id="reciter">
+      <option value="Alafasy_128kbps">মিশারি রাশিদ আল-আফাসি</option>
+      <option value="Abdul_Basit_Murattal_192kbps">আবদুল বাসিত আবদুস সামাদ (মুরাত্তাল)</option>
+      <option value="Husary_128kbps">মাহমুদ খলিল আল-হুসারি</option>
+      <option value="Minshawy_Murattal_128kbps">মুহাম্মাদ সিদ্দিক আল-মিনশাওয়ি (মুরাত্তাল)</option>
+      <option value="Abdurrahmaan_As-Sudais_192kbps">আবদুর রহমান আস-সুদাইস</option>
+      <option value="Saood_ash-Shuraym_128kbps">সা‘ঊদ আশ-শুরাইম</option>
+      <option value="Maher_AlMuaiqly_128kbps">মাহের আল-মুআইকিলি</option>
+      <option value="Abu_Bakr_Ash-Shaatree_128kbps">আবু বকর আশ-শাতরি</option>
+    </select>
+    <p id="audio-current" class="muted" aria-live="polite">কোনো আয়াত চালু নেই</p>
+    <audio id="quran-audio" controls preload="none">আপনার ব্রাউজার অডিও প্লেয়ার সমর্থন করে না।</audio>
+    <div class="audio-actions">
+      <button id="audio-prev" type="button">⏮ আগের আয়াত</button>
+      <button id="audio-play" type="button">▶ চালান</button>
+      <button id="audio-next" type="button">পরের আয়াত ⏭</button>
+      <label for="audio-speed">গতি</label>
+      <select id="audio-speed"><option value="0.75">০.৭৫×</option><option value="1" selected>১×</option><option value="1.25">১.২৫×</option><option value="1.5">১.৫×</option></select>
+    </div>
+    <p class="audio-note">অডিও সূত্র: EveryAyah.com। অডিও ফাইল ইন্টারনেট থেকে স্ট্রিম হবে; এই ধাপে ডাউনলোড বা অফলাইন অডিও যুক্ত হয়নি।</p>
+  </section>
   <p id="reader-status" class="status" role="status" aria-live="polite">আরবি আয়াত ও বাংলা অনুবাদ লোড হচ্ছে…</p>
   <section id="ayah-list" aria-label="কুরআনের আয়াত"></section>
   <nav class="surah-pager" aria-label="সূরা নেভিগেশন">
@@ -46,7 +70,26 @@ const structuredData = {
   const status = document.querySelector('#reader-status');
   const selector = document.querySelector('#translation');
   const storageKey = 'quran-reader-bookmarks-v1';
+  const qariKey = 'quran-reader-qari-v1';
+  const qaris = [
+    ['Alafasy_128kbps','মিশারি রাশিদ আল-আফাসি'],
+    ['Abdul_Basit_Murattal_192kbps','আবদুল বাসিত আবদুস সামাদ (মুরাত্তাল)'],
+    ['Husary_128kbps','মাহমুদ খলিল আল-হুসারি'],
+    ['Minshawy_Murattal_128kbps','মুহাম্মাদ সিদ্দিক আল-মিনশাওয়ি (মুরাত্তাল)'],
+    ['Abdurrahmaan_As-Sudais_192kbps','আবদুর রহমান আস-সুদাইস'],
+    ['Saood_ash-Shuraym_128kbps','সা‘ঊদ আশ-শুরাইম'],
+    ['Maher_AlMuaiqly_128kbps','মাহের আল-মুআইকিলি'],
+    ['Abu_Bakr_Ash-Shaatree_128kbps','আবু বকর আশ-শাতরি']
+  ];
+  const audio = document.querySelector('#quran-audio');
+  const reciter = document.querySelector('#reciter');
+  const audioCurrent = document.querySelector('#audio-current');
+  let currentAyah = 0;
   let fontSize = 34;
+  try {
+    const savedQari = localStorage.getItem(qariKey);
+    if (savedQari && qaris.some(item => item[0] === savedQari)) reciter.value = savedQari;
+  } catch {}
   const bn = (value) => String(value).replace(/\\d/g, d => '০১২৩৪৫৬৭৮৯'[Number(d)]);
   const safeGet = async (url) => {
     const response = await fetch(url);
@@ -82,15 +125,56 @@ const structuredData = {
       try { localStorage.setItem(storageKey, JSON.stringify(next)); refreshMark(); }
       catch { setStatus('বুকমার্ক সংরক্ষণ করা যায়নি—ব্রাউজারের স্টোরেজ পরীক্ষা করুন।'); }
     });
+    const listen = document.createElement('button'); listen.type = 'button'; listen.textContent = '▶ শুনুন';
+    listen.addEventListener('click', () => playAyah(number));
     const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'আয়াত কপি';
     copy.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(arabic + '\\n' + tr.textContent); setStatus('আয়াত কপি হয়েছে।'); }
       catch { setStatus('কপি করা যায়নি। ব্রাউজারের অনুমতি পরীক্ষা করুন।'); }
     });
-    actions.append(mark, copy);
+    actions.append(listen, mark, copy);
     article.append(heading, ar, tr, actions);
     list.append(article);
   };
+  function audioUrl(number) {
+    const surah = String(surahNumber).padStart(3, '0');
+    const ayah = String(number).padStart(3, '0');
+    return 'https://everyayah.com/data/' + encodeURIComponent(reciter.value) + '/' + surah + ayah + '.mp3';
+  }
+  function playAyah(number) {
+    if (number < 1 || number > ayahCount) return;
+    currentAyah = number;
+    audioCurrent.textContent = 'সূরা ' + bn(surahNumber) + ', আয়াত ' + bn(number) + ' — ' + (qaris.find(item => item[0] === reciter.value)?.[1] || 'নির্বাচিত ক্বারি');
+    audio.src = audioUrl(number);
+    audio.load();
+    audio.play().then(() => {
+      document.querySelectorAll('.ayah.playing').forEach(node => node.classList.remove('playing'));
+      document.querySelector('#ayah-' + number)?.classList.add('playing');
+    }).catch(() => {
+      setStatus('অডিও চালু করা যায়নি। ইন্টারনেট সংযোগ বা নির্বাচিত ক্বারির ফাইলের প্রাপ্যতা পরীক্ষা করুন।');
+    });
+  }
+  audio.addEventListener('ended', () => {
+    document.querySelector('#ayah-' + currentAyah)?.classList.remove('playing');
+    if (currentAyah < ayahCount) playAyah(currentAyah + 1);
+    else audioCurrent.textContent = 'এই সূরার তিলাওয়াত শেষ হয়েছে।';
+  });
+  audio.addEventListener('error', () => {
+    setStatus('এই আয়াতের অডিও পাওয়া যায়নি। অন্য ক্বারি নির্বাচন করে চেষ্টা করুন।');
+    document.querySelector('#ayah-' + currentAyah)?.classList.remove('playing');
+  });
+  document.querySelector('#audio-play').addEventListener('click', () => {
+    if (!currentAyah) playAyah(1);
+    else if (audio.paused) audio.play().catch(() => setStatus('অডিও চালু করা যায়নি।'));
+    else audio.pause();
+  });
+  document.querySelector('#audio-prev').addEventListener('click', () => playAyah(Math.max(1, (currentAyah || 1) - 1)));
+  document.querySelector('#audio-next').addEventListener('click', () => playAyah(Math.min(ayahCount, (currentAyah || 0) + 1)));
+  document.querySelector('#audio-speed').addEventListener('change', event => { audio.playbackRate = Number(event.target.value); });
+  reciter.addEventListener('change', () => {
+    try { localStorage.setItem(qariKey, reciter.value); } catch {}
+    if (currentAyah) playAyah(currentAyah);
+  });
   async function load() {
     list.replaceChildren();
     setStatus('আয়াত ও অনুবাদ আনা হচ্ছে…');
@@ -147,6 +231,15 @@ const structuredData = {
 </script>
 
 <style>
+  .audio-player{margin:16px 0}
+  .audio-player h2{margin-top:0}
+  .audio-player>select{display:block;max-width:100%;margin:6px 0 12px;padding:8px;border:1px solid #cfc7b5;border-radius:8px}
+  .audio-player audio{display:block;width:100%;margin:10px 0}
+  .audio-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .audio-actions button{border:1px solid #0b5d45;background:#fff;color:#0b5d45;border-radius:9px;padding:7px 12px;cursor:pointer}
+  .audio-actions select{padding:7px;border:1px solid #cfc7b5;border-radius:8px}
+  .audio-note{font-size:.88rem;color:#5d6b64}
+  .ayah.playing{border-color:#0b5d45;box-shadow:0 0 0 2px rgba(11,93,69,.12)}
   .reader-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border:1px solid #e4ddc9;border-radius:14px;padding:12px;margin:16px 0}
   .reader-tools button,.ayah-actions button{border:1px solid #0b5d45;background:#fff;color:#0b5d45;border-radius:9px;padding:7px 12px;cursor:pointer}
   .reader-tools select{max-width:min(100%,360px);padding:8px;border:1px solid #cfc7b5;border-radius:8px}

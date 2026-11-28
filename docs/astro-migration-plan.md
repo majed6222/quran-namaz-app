@@ -66,7 +66,8 @@
 - [ ] Run and pass `npm run build` in a network-enabled environment.
 - [ ] Verify Quran.com/alquran.cloud API responses, translation metadata and rendered text against trusted printed editions.
 - [x] Add the initial ayah-by-ayah audio player and opt-in tajweed color display (implementation added; source verification and browser testing remain pending).
-- [ ] Add tafsir and reading-progress integration after source/licensing review.
+- [x] Add initial ayah-by-ayah Bengali tafsir selection and reader (implementation added; source verification/browser tests pending).
+- [ ] Integrate reading progress and review tafsir source/licensing.
 - [ ] Integrate the existing Namaz and Dua modules and preserve legacy user data.
 - [ ] Complete mobile/browser, accessibility, offline and backup/restore tests.
 - [ ] Set the real `SITE_URL`, deploy a preview, and obtain user approval before production cutover.
@@ -107,3 +108,19 @@ This is an implementation milestone only; no successful browser playback or prod
 Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
 
 The tajweed feature is implemented but not yet browser- or scholarly-verified. The GitHub Actions build passed for the first tajweed implementation commit; a subsequent small normalization fix is awaiting its own build run.
+
+
+### Step 3 — Bengali tafsir reader (implementation added)
+
+- [x] Added a separate tafsir section to every Surah page.
+- [x] Loads the available Bengali/Bangla tafsir sources from Quran.com API v4.
+- [x] Lets the reader choose a tafsir source and ayah number.
+- [x] Fetches the selected explanation by Surah and ayah; remembers the source choice locally where browser storage is available.
+- [x] Renders tafsir markup through a small allowlist of formatting elements; does not inject the API's raw HTML.
+- [ ] Verify available source names, authors and sample explanations against the upstream API and reputable editions.
+- [ ] Review tafsir content attribution, licensing and suitability before public release.
+- [ ] Test source selection, missing ayah explanations, blocked storage, API errors and mobile layout in a browser.
+
+Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
+
+This is an initial API-backed reader, not a scholarly endorsement or independent verification of the tafsir content.

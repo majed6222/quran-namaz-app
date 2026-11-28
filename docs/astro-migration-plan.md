@@ -71,3 +71,17 @@
 - [ ] Set the real `SITE_URL`, deploy a preview, and obtain user approval before production cutover.
 
 The new reader currently depends on an internet connection. It does not yet provide offline Quran text, audio playback, tajweed highlighting or tafsir. Bookmarks are stored locally in the browser under a new key and are not synchronized between devices.
+
+### Step 1 — Ayah-by-ayah audio player (implementation added)
+
+- [x] Added eight reciter options matching the existing application's reciter folder identifiers.
+- [x] Added EveryAyah per-ayah MP3 URL construction using zero-padded three-digit surah and ayah numbers.
+- [x] Added per-ayah Listen buttons, previous/next controls, continuous playback, playback speed and browser-native seek/volume controls.
+- [x] Remember selected reciter locally in the browser.
+- [ ] Test the actual MP3 URLs for all eight reciters; folder availability can vary.
+- [ ] Test playback, sequential transition, errors and mobile browser behavior.
+- [ ] Confirm audio hosting terms/attribution before public release.
+
+Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
+
+This is an implementation milestone only; no successful browser playback or production build has yet been confirmed.

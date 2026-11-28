@@ -3,7 +3,7 @@ const {
   title = 'পবিত্র আল-কুরআন ও নামাজ শিক্ষা',
   description = 'কুরআন পাঠ, সূরা পরিচিতি এবং নামাজ শিক্ষার বাংলা সহায়িকা।'
 } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
 ---
 <!doctype html>
 <html lang="bn" dir="ltr">
@@ -12,7 +12,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {canonical && <link rel="canonical" href={canonical} />}
     <meta name="theme-color" content="#0b5d45" />
   </head>
   <body>

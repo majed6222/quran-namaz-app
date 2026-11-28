@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const surahs = [{ number: 1, slug: 'al-fatiha', bn: 'আল-ফাতিহা', en: 'Al-Fatihah' }];
+---
+<BaseLayout
+  title="আল-কুরআন | সূরা তালিকা"
+  description="আল-কুরআনের সূরা পরিচিতি দেখুন।"
+>
+  <h1>আল-কুরআন</h1>
+  <p class="muted">এই প্রাথমিক সংস্করণে প্রথম নমুনা সূরা পৃষ্ঠা যুক্ত করা হয়েছে। পূর্ণ ১১৪ সূরার তালিকা মূল অ্যাপের বিদ্যমান ডেটা যাচাই করে যুক্ত হবে।</p>
+  <div class="cards">
+    {surahs.map((surah) => (
+      <a class="card" href={`/quran/surah/${surah.slug}/`}>
+        <strong>{surah.number}. {surah.bn}</strong>
+        <p class="muted">{surah.en}</p>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

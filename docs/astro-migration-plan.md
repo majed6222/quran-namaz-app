@@ -85,3 +85,8 @@ The new reader currently depends on an internet connection. It does not yet prov
 Implementation reference: `website/src/pages/quran/surah/[slug].astro`.
 
 This is an implementation milestone only; no successful browser playback or production build has yet been confirmed.
+
+### Build validation automation
+
+- [x] Added `.github/workflows/astro-build.yml` to run `npm install` and `npm run build` on pushes to `astro-migration` that change the website, and via manual dispatch.
+- [ ] Confirm the first GitHub Actions run completes successfully. The workflow file is committed, but its run result has not yet been confirmed.

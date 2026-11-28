@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+const surahs = [
+  {
+    slug: 'al-fatiha',
+    number: 1,
+    nameBn: 'আল-ফাতিহা',
+    nameEn: 'Al-Fatihah',
+    meaning: 'সূচনা',
+    ayahCount: 7,
+    type: 'মাক্কী'
+  }
+];
+export function getStaticPaths() {
+  return surahs.map((surah) => ({ params: { slug: surah.slug }, props: { surah } }));
+}
+const { surah } = Astro.props;
+---
+<BaseLayout
+  title={`সূরা ${surah.nameBn} | ${surah.nameEn}`}
+  description={`সূরা ${surah.nameBn} (${surah.nameEn})-এর পরিচিতি: ${surah.ayahCount} আয়াত, ${surah.type} সূরা।`}
+>
+  <p><a href="/quran/">← সূরা তালিকায় ফিরে যান</a></p>
+  <section class="hero">
+    <h1>সূরা {surah.nameBn}</h1>
+    <p>{surah.nameEn} · সূরা নম্বর {surah.number}</p>
+  </section>
+  <section class="panel">
+    <h2>সূরা পরিচিতি</h2>
+    <p><strong>অর্থ:</strong> {surah.meaning}</p>
+    <p><strong>আয়াত সংখ্যা:</strong> {surah.ayahCount}</p>
+    <p><strong>নাযিলের স্থান:</strong> {surah.type}</p>
+  </section>
+  <aside class="panel">
+    <strong>গুরুত্বপূর্ণ:</strong>
+    <p class="muted">এটি আপাতত পরিচিতিমূলক SEO পৃষ্ঠা। এখানে আরবি আয়াত, অনুবাদ বা তাফসির যোগ করা হয়নি। মূল অ্যাপের যাচাইকৃত ডেটা এবং উৎসের শর্ত যাচাই করে পরবর্তী ধাপে যুক্ত করা হবে।</p>
+  </aside>
+</BaseLayout>

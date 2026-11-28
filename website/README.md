@@ -22,11 +22,12 @@ Astro outputs static files to `dist/`.
 ## Current scope
 
 - Bengali-first home page
-- Quran index route
-- Static Surah Al-Fatihah introduction route
+- Quran index route listing all 114 Surahs
+- 114 statically generated Surah metadata pages
+- XML sitemap and robots.txt
 - Shared layout, title, description and canonical URL
 
-The Surah page is metadata-only. Quran Arabic text, translations and tafsir will only be integrated from verified existing data and sources after content/licensing review.
+Surah pages currently show metadata extracted from the existing app's `SR` dataset: Arabic/Bengali names, transliteration, ayah count and revelation category. The metadata has been checked for 114 entries, unique slugs and sequential numbering. Quran Arabic ayah text, translations, tafsir and audio are not yet embedded in these SEO pages; they will only be integrated after source and licensing review.
 
 ## Deployment
 

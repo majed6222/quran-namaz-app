@@ -95,12 +95,13 @@ const structuredData = {
     list.replaceChildren();
     setStatus('আয়াত ও অনুবাদ আনা হচ্ছে…');
     try {
+      const requestedTranslation = selector.value;
       const translationList = await safeGet(api + '/resources/translations');
       const bengali = (translationList.translations || []).filter(item =>
         String(item.language_name || '').toLowerCase().includes('bengali') ||
         String(item.language_name || '').toLowerCase().includes('bangla')
       );
-      bengali.sort((a,b) => Number(/muhiuddin/i.test((a.author || '') + ' ' + (a.name || ''))) * -1);
+      bengali.sort((a,b) => Number(/muhiuddin/i.test((b.author || '') + ' ' + (b.name || ''))) - Number(/muhiuddin/i.test((a.author || '') + ' ' + (a.name || ''))));
       selector.replaceChildren();
       const auto = document.createElement('option'); auto.value = 'auto'; auto.textContent = 'স্বয়ংক্রিয় (প্রস্তাবিত)'; selector.append(auto);
       bengali.forEach(item => {
@@ -108,6 +109,7 @@ const structuredData = {
         option.value = String(item.id); option.textContent = (item.name || 'বাংলা অনুবাদ') + (item.author ? ' — ' + item.author : '');
         selector.append(option);
       });
+      if ([...selector.options].some(option => option.value === requestedTranslation)) selector.value = requestedTranslation;
       const [arabicResult, chosenTranslation] = await Promise.all([
         safeGet(api + '/quran/verses/uthmani?chapter_number=' + surahNumber),
         (async () => {
